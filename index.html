@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0F23">
+<title>Spectrum Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: one dark "game show" stage. A big spectrum bar is the hero on every screen;
+   pins (guesses) and one hot marker (the secret number) land on it. Phones get a single column,
+   the main screen scales up with vw units. */
+:root{
+  --bg:#0B0F23; --panel:#141A3A; --panel2:#1B2350; --line:#2B3570;
+  --text:#EEF1FF; --muted:#9AA5DC;
+  --hot:#FF4F6D; --sun:#FFD23F; --mint:#3DDC97; --cyan:#46C8FF; --ink:#0B0F23;
+  --display:'Unbounded',system-ui,sans-serif; --body:'Figtree',system-ui,-apple-system,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:max(16px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));
+  background:radial-gradient(1200px 600px at 80% -10%,#1d2766 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,#3a1240 0%,transparent 55%),var(--bg)}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0}
+.center{display:grid;place-items:center;min-height:60vh;color:var(--muted)}
+.brand{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.code{font-size:13px;color:var(--muted)} .code b{font-family:var(--display);color:var(--sun);letter-spacing:.12em;margin-left:4px}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.h1{font-family:var(--display);font-weight:900;font-size:clamp(26px,7vw,34px);line-height:1.1;text-wrap:balance}
+.lede{color:var(--muted);text-wrap:pretty}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-family:var(--display);font-size:16px;font-weight:700}
+label{font-size:13px;color:var(--muted);font-weight:600}
+input[type=text],input:not([type]),select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px}
+.btn{border:0;border-radius:14px;padding:14px 18px;background:var(--panel2);color:var(--text);font-weight:700;border:1px solid var(--line)}
+.btn.hot{background:var(--hot);border-color:var(--hot);color:#fff}
+.btn.sun{background:var(--sun);border-color:var(--sun);color:var(--ink)}
+.btn.big{padding:18px 22px;font-size:18px;font-family:var(--display);font-weight:700}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);padding:6px 12px 6px 6px;border-radius:99px;font-weight:600;font-size:14px}
+.chip i{font-style:normal;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--c,var(--cyan));color:var(--ink);font-weight:800;font-size:12px}
+.chip.done{border-color:var(--mint)} .chip.done::after{content:"✓";color:var(--mint);font-weight:800}
+.qlabel{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.qt{font-family:var(--display);font-weight:700;font-size:clamp(20px,5.6vw,26px);line-height:1.25;text-wrap:balance}
+
+/* --- spectrum bar --- */
+.scale{width:100%}
+.ends{display:flex;justify-content:space-between;gap:16px;font-family:var(--display);font-weight:700;font-size:clamp(12px,3.2vw,15px);text-transform:uppercase;letter-spacing:.03em}
+.ends span:first-child{color:var(--cyan)} .ends span:last-child{color:var(--hot);text-align:right}
+.track-outer{padding:74px 22px 120px}
+.track{position:relative;height:18px;border-radius:99px;background:linear-gradient(90deg,var(--cyan),#8d7bff 50%,var(--hot));box-shadow:0 0 0 4px rgba(255,255,255,.06)}
+.track::before{content:"";position:absolute;inset:0;border-radius:inherit;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(11,15,35,.5) calc(10% - 2px) 10%);}
+.pin{position:absolute;left:50%;opacity:0;transform:translateX(-50%);transition:left .9s cubic-bezier(.2,1.35,.3,1) var(--d,0s),opacity .3s var(--d,0s)}
+.pin.in{left:calc(var(--v)*1%);opacity:1}
+.pin::before{content:"";position:absolute;left:50%;width:3px;margin-left:-1.5px;background:rgba(238,241,255,.55)}
+.pin.guess{top:calc(100% + 8px + var(--lane,0)*38px)}
+.pin.guess::before{bottom:100%;height:calc(8px + var(--lane,0)*38px)}
+.pin.guess i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--c);color:var(--ink);font-style:normal;font-weight:800;border:3px solid var(--bg)}
+.pin.guess.best i{box-shadow:0 0 0 4px var(--sun),0 0 24px var(--sun)}
+.pin.actual{bottom:calc(100% + 10px);--d:1.2s}
+.pin.actual::before{top:100%;height:10px}
+.pin.actual b{display:grid;place-items:center;min-width:64px;height:48px;padding:0 12px;border-radius:14px;background:var(--hot);color:#fff;font-family:var(--display);font-size:24px;box-shadow:0 8px 30px rgba(255,79,109,.55)}
+
+/* --- slider --- */
+.rng{-webkit-appearance:none;appearance:none;width:100%;height:18px;border-radius:99px;background:linear-gradient(90deg,var(--cyan),#8d7bff 50%,var(--hot));outline-offset:8px;margin:14px 0}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:38px;height:38px;border-radius:50%;background:#fff;border:5px solid var(--sun);box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.rng::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:5px solid var(--sun)}
+.bignum{font-family:var(--display);font-weight:900;font-size:64px;text-align:center;line-height:1}
+.mini-ends{display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.mini-ends span:first-child{color:var(--cyan)} .mini-ends span:last-child{color:var(--hot);text-align:right}
+
+/* --- host setup --- */
+.qcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.qcard.unset{opacity:.78;border-style:dashed}
+.qtop{display:flex;gap:10px;align-items:flex-start}
+.qnum{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--panel2);font-weight:800;font-size:13px;color:var(--muted)}
+.qtop .qt2{flex:1;min-width:0;font-weight:600}
+.x{flex:none;background:none;border:0;color:var(--muted);font-size:22px;line-height:1;padding:0 4px}
+.qval{display:flex;align-items:baseline;gap:10px}
+.qval b{font-family:var(--display);font-size:22px;min-width:2.2ch}
+.qval small{color:var(--muted)}
+.qcard:not(.unset) .qval b{color:var(--sun)}
+.startbar{position:sticky;bottom:max(8px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;background:linear-gradient(transparent,var(--bg) 40%);padding-top:18px}
+.startbar small{color:var(--muted);text-align:center}
+details.card summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:15px}
+.sugg{display:flex;flex-direction:column;gap:8px}
+.sugg-item{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--sun);border-radius:14px;padding:10px 12px}
+.sugg-item p{flex:1;min-width:0;font-weight:600}
+.sugg-item small{display:block;color:var(--muted);font-weight:500}
+.sugg-item button{padding:8px 12px;border-radius:10px;font-size:14px}
+.mine{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px dashed var(--hot);border-radius:16px;padding:14px 16px}
+.mine b{font-family:var(--display);font-size:34px;color:var(--hot)}
+.warn{font-size:13px;color:var(--muted);text-align:center}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap} .btnrow .btn{flex:1}
+.toast{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);text-align:center;background:var(--mint);color:var(--ink);font-weight:700;padding:10px 16px;border-radius:99px;z-index:50}
+
+/* --- results --- */
+.res{display:flex;flex-direction:column;gap:6px}
+.res-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.res-row.best{border-color:var(--sun);background:var(--panel2)}
+.res-row .dot{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.res-row .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-row .g{color:var(--muted);font-variant-numeric:tabular-nums}
+.res-row .pts{font-family:var(--display);font-weight:700;color:var(--mint);min-width:3.5ch;text-align:right}
+.res-row .tot{font-family:var(--display);font-weight:700;font-variant-numeric:tabular-nums}
+.landing .card{gap:10px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;height:min(46vh,360px);margin-top:8px}
+.podium .step{flex:1;max-width:220px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;text-align:center}
+.podium .bar{width:100%;border-radius:16px 16px 0 0;background:linear-gradient(var(--c),color-mix(in srgb,var(--c) 40%,var(--bg)));display:grid;place-items:start center;padding-top:12px;font-family:var(--display);font-weight:900;font-size:clamp(28px,5vw,56px);color:var(--ink)}
+.podium .pname{font-family:var(--display);font-weight:700;font-size:clamp(14px,2.2vw,26px);overflow-wrap:anywhere}
+.podium .psc{color:var(--muted);font-weight:700}
+
+/* --- main screen (TV) --- */
+body.tv .wrap{max-width:1500px;gap:clamp(12px,2vw,28px)}
+.tvhead{display:flex;justify-content:space-between;align-items:center}
+.tvhead .brand{font-size:clamp(14px,1.6vw,22px)} .tvhead .code{font-size:clamp(14px,1.6vw,22px)}
+.qrs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:clamp(14px,2.4vw,36px);align-items:start}
+.qr-card{border-radius:28px;padding:clamp(16px,2vw,28px);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;border:2px solid var(--c)}
+.qr-card.hot{--c:var(--hot)} .qr-card.sun{--c:var(--sun)}
+.qr-card h3{font-family:var(--display);font-size:clamp(20px,2.6vw,38px);color:var(--c)}
+.qr-card p{color:var(--muted);font-size:clamp(14px,1.5vw,22px)}
+.qrbox{background:#fff;border-radius:18px;padding:14px;width:min(100%,clamp(200px,24vw,360px));aspect-ratio:1}
+.qrbox svg{display:block;width:100%;height:100%}
+.qrbox .fallback{color:#000;font-size:12px;word-break:break-all}
+.tvq{font-family:var(--display);font-weight:900;font-size:clamp(26px,5vw,68px);line-height:1.12;text-wrap:balance}
+.statusrow{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.statusrow .cnt{font-family:var(--display);font-weight:700;font-size:clamp(16px,2vw,28px);color:var(--sun)}
+.tvgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:clamp(14px,2.4vw,36px);align-items:start}
+@media (max-width:900px){.tvgrid{grid-template-columns:1fr}}
+.status{color:var(--muted);font-size:clamp(16px,2vw,26px);text-align:center}
+.lockover{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;background:rgba(11,15,35,.82);z-index:40;backdrop-filter:blur(4px)}
+.lockover span{font-family:var(--display);font-weight:900;font-size:min(36vw,300px);line-height:1;color:var(--sun)}
+.lockover small{color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:clamp(14px,2vw,24px)}
+.you-line{display:flex;justify-content:space-between;gap:12px;font-weight:700}
+.bigpts{font-family:var(--display);font-weight:900;font-size:56px;text-align:center;color:var(--mint)}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--sun);color:var(--ink);font-weight:800;font-size:12px}
+@media (prefers-reduced-motion:reduce){.pin{transition:none}.pin.in{left:calc(var(--v)*1%)}}
+</style>
+</head>
+<body>
+<div id="app" class="center">Loading…</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- config ---------- */
+const SB_URL='https://qrfgbkgbwtojxcylmhtl.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZmdia2did3RvanhjeWxtaHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NDkxNzYsImV4cCI6MjEwNzMyNTE3Nn0.e6evfxr3OKgANtbEbfAvO38nWCyeZHwxl9GDo-Sholc';
+const TABLE='bday_game';
+const SCALES={
+  never:['Would Never Do','Would Definitely Do'],
+  hates:['Hates It','Loves It'],
+  idea:['Terrible Idea','Great Idea'],
+  freq:['Never','Always'],
+  me:['Not Me','Literally Me']
+};
+const SCALE_NAMES={never:'Would Never Do ↔ Would Definitely Do',hates:'Hates It ↔ Loves It',idea:'Terrible Idea ↔ Great Idea',freq:'Never ↔ Always',me:'Not Me ↔ Literally Me'};
+const DEFAULTS=[
+  ['How many days a week does {n} eat paratha?','0 days','7 days'],
+  ['{n} skips cooking and orders food.',...SCALES.freq],
+  ['{n} calls Maggi a proper meal.',...SCALES.freq],
+  ['{n} says "just one chai" and has three.',...SCALES.freq],
+  ['{n} eats a 2-day-old leftover paratha.',...SCALES.never],
+  ['{n} stays in the lab past midnight.',...SCALES.freq],
+  ['{n} tells his parents "thesis almost done."',...SCALES.me],
+  ['{n} skips a party for his advisor\'s late-night email.',...SCALES.never],
+  ['{n} nods along in a talk he didn\'t understand.',...SCALES.freq],
+  ['{n} says "my PhD will finish next year."',...SCALES.me],
+  ['{n} cries during Bollywood climaxes.',...SCALES.freq],
+  ['{n} says "5 minutes" and arrives 45 minutes late.',...SCALES.me],
+  ['{n} fights to pay the bill.',...SCALES.hates],
+  ['{n} uses "Mummy\'s calling" to escape a plan.',...SCALES.never],
+  ['{n} replies in the family WhatsApp group.',...SCALES.freq],
+  ['{n} does karaoke without being asked.',...SCALES.hates],
+  ['{n} quits his PhD to start an AI startup.',...SCALES.never],
+  ['{n} goes on a group trip.',...SCALES.idea],
+  ['{n} wakes up before 8 AM on weekends.',...SCALES.never],
+  ['{n} buys something just because it was on sale.',...SCALES.me]
+];
+const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432'];
+const LOCK_MS=5000, CAP_MS=60000;
+
+/* ---------- small helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const rid=n=>{const a='abcdefghijklmnopqrstuvwxyz0123456789';let s='';for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
+const colorFor=pid=>{let h=0;for(const c of String(pid))h=(h*31+c.charCodeAt(0))>>>0;return PALETTE[h%PALETTE.length]};
+const initial=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
+const tierPts=d=>d<=3?10:d<=8?7:d<=15?5:d<=25?3:d<=40?1:0;
+function pop(big){ if(!window.confetti)return; try{confetti({particleCount:big?180:100,spread:big?100:70,origin:{y:.35},colors:['#FF4F6D','#FFD23F','#46C8FF','#3DDC97','#ffffff'],disableForReducedMotion:true});}catch(e){} }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+
+/* ---------- state ---------- */
+const qs=new URLSearchParams(location.search);
+let ROOM=(qs.get('r')||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
+let VIEW=qs.get('v')||(ROOM?'play':'');
+const base=location.origin+location.pathname;
+const app=$('#app');
+const cache=new Map();
+let loaded=false, curSig='', sb=null, hq=[], rafQueued=false;
+const lockSeen={};
+
+const roomRow=()=>cache.get('room:'+ROOM);
+const R=()=>{const r=roomRow();return r&&r.data};
+const rows=kind=>[...cache.values()].filter(r=>r.kind===kind);
+const players=()=>rows('player').map(r=>({pid:r.id.split(':')[2],name:r.data.name,score:r.data.score||0})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
+const guessesFor=qid=>rows('guess').filter(r=>r.data.qid===qid);
+const revealFor=qid=>{const r=cache.get('reveal:'+ROOM+':'+qid);return r&&r.data};
+const myHost=()=>{let h=store.get('bday_host_'+ROOM);if(!h){h='h'+rid(10);store.set('bday_host_'+ROOM,h)}return h};
+
+async function loadRoom(){
+  if(!sb||!ROOM)return;
+  const {data,error}=await sb.from(TABLE).select('*').eq('room',ROOM).limit(1000);
+  if(error||!data)return;
+  const ids=new Set(data.map(r=>r.id));
+  data.forEach(r=>cache.set(r.id,r));
+  for(const k of [...cache.keys()]) if(!ids.has(k)) cache.delete(k);
+}
+async function put(id,kind,data,room){
+  const rm=room||ROOM;
+  const row={id,room:rm,kind,data,updated_at:new Date().toISOString()};
+  cache.set(id,row); queueRender();
+  const {error}=await sb.from(TABLE).upsert(row);
+  if(error){console.error(error);toast('Connection hiccup. Retrying…');setTimeout(()=>sb.from(TABLE).upsert(row),1500);}
+}
+function subscribe(){
+  sb.channel('room-'+ROOM).on('postgres_changes',{event:'*',schema:'public',table:TABLE,filter:'room=eq.'+ROOM},p=>{
+    if(p.eventType==='DELETE'){ if(p.old&&p.old.id)cache.delete(p.old.id); } else if(p.new){ cache.set(p.new.id,p.new); }
+    queueRender();
+  }).subscribe();
+  setInterval(async()=>{await loadRoom();queueRender()},2500);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadRoom().then(queueRender)}});
+}
+function queueRender(){ if(rafQueued)return; rafQueued=true; requestAnimationFrame(()=>{rafQueued=false;render()}); }
+function mount(sig,html,bind){ if(sig===curSig)return false; curSig=sig; app.className=''; app.innerHTML=html; if(bind)bind(); window.scrollTo(0,0); return true; }
+function setHtml(el,html){ if(el&&el._h!==html){el._h=html;el.innerHTML=html} }
+
+/* ---------- shared widgets ---------- */
+function qrSvg(text){
+  try{ const q=qrcode(0,'M'); q.addData(text); q.make(); return q.createSvgTag({cellSize:4,margin:0,scalable:true}); }
+  catch(e){ return '<div class="fallback">'+esc(text)+'</div>'; }
+}
+function chipsHtml(done){
+  const ps=players(); if(!ps.length) return '<span class="code">Nobody yet. Scan the code to join.</span>';
+  return ps.map(p=>'<span class="chip'+(done&&done.has(p.pid)?' done':'')+'" style="--c:'+colorFor(p.pid)+'"><i>'+esc(initial(p.name))+'</i>'+esc(p.name)+'</span>').join('');
+}
+function scaleBar(q,pins,actual){
+  const sorted=[...pins].sort((a,b)=>a.v-b.v);
+  const pinHtml=sorted.map((p,i)=>'<div class="pin guess'+(p.best?' best':'')+'" style="--v:'+p.v+';--lane:'+(i%3)+';--c:'+p.c+';--d:'+(i*0.12)+'s"><i>'+esc(p.t)+'</i></div>').join('');
+  const act=actual!=null?'<div class="pin actual" style="--v:'+actual+'"><b>'+actual+'</b></div>':'';
+  return '<div class="scale"><div class="ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div><div class="track-outer"><div class="track">'+pinHtml+act+'</div></div></div>';
+}
+function animatePins(){ setTimeout(()=>app.querySelectorAll('.pin').forEach(p=>p.classList.add('in')),80); }
+function leaderboardHtml(rev){
+  const ps=players();
+  const byPid={}; if(rev) rev.results.forEach(x=>byPid[x.pid]=x);
+  return '<div class="res">'+ps.map(p=>{const x=byPid[p.pid]; return '<div class="res-row'+(x&&x.best?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+esc(p.name)+'</span><span class="pts">'+(x?'+'+x.pts:'')+'</span><span class="tot">'+p.score+'</span></div>'}).join('')+'</div>';
+}
+function resultsHtml(rev){
+  const rs=[...rev.results].sort((a,b)=>b.pts-a.pts||(a.dist==null)-(b.dist==null));
+  return '<div class="res">'+rs.map(x=>'<div class="res-row'+(x.best?' best':'')+'" style="--c:'+colorFor(x.pid)+'"><span class="dot"></span><span class="nm">'+esc(x.name)+'</span><span class="g">'+(x.value==null?'no guess':x.value)+'</span><span class="pts">+'+x.pts+'</span></div>').join('')+'</div>';
+}
+function pinsFrom(rev){ return rev.results.filter(x=>x.value!=null).map(x=>({v:x.value,t:initial(x.name),c:colorFor(x.pid),best:x.best})); }
+
+/* ---------- landing / create ---------- */
+function landingHtml(){
+  return '<main class="wrap landing"><div class="brand">Spectrum Party</div>'+
+  '<h1 class="h1">Guess where they landed.</h1><p class="lede">One person secretly places themselves on a scale. Everyone else argues, bluffs, and guesses.</p>'+
+  '<section class="card"><h2>Start a game</h2><label for="hostName">Birthday person</label><input id="hostName" value="Aman" maxlength="20" autocomplete="off"><button id="create" class="btn hot big">Create room on this screen</button></section>'+
+  '<section class="card"><h2>Join a game</h2><label for="joinCode">Room code</label><input id="joinCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off"><button id="join" class="btn sun">Join as a player</button><button id="joinHost" class="btn ghost">I am the birthday person</button></section></main>';
+}
+function bindLanding(){
+  $('#create').onclick=async()=>{
+    const btn=$('#create'); btn.disabled=true; btn.textContent='Creating…';
+    const name=($('#hostName').value||'Aman').trim()||'Aman';
+    const L='ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code='';
+    for(let t=0;t<8;t++){ code=''; for(let i=0;i<4;i++)code+=L[Math.floor(Math.random()*L.length)];
+      const {data}=await sb.from(TABLE).select('id').eq('id','room:'+code).limit(1); if(!data||!data.length)break; }
+    ROOM=code; VIEW='tv';
+    await put('room:'+code,'room',{phase:'setup',hostName:name,hostId:'',questions:[],qi:0,rphase:'guess',createdAt:Date.now()},code);
+    history.replaceState(null,'','?r='+code+'&v=tv');
+    startRoom();
+  };
+  const go=v=>{const c=($('#joinCode').value||'').toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){toast('Enter the 4-letter code');return}location.href=base+'?r='+c+'&v='+v;};
+  $('#join').onclick=()=>go('play'); $('#joinHost').onclick=()=>go('host');
+}
+
+/* ---------- main screen (TV) ---------- */
+function tvHead(){ return '<header class="tvhead"><div class="brand">Spectrum Party</div><div class="code">Room<b>'+ROOM+'</b></div></header>'; }
+function renderTV(){
+  document.body.classList.add('tv');
+  const r=R(), hn=r.hostName||'Aman';
+  if(r.phase==='setup'){
+    const first=mount('tv-setup','<main class="wrap">'+tvHead()+
+      '<section class="qrs"><div class="qr-card hot"><div class="qrbox" id="qr-host"></div><h3>'+esc(hn)+'</h3><p>Scan to set the secret numbers</p></div>'+
+      '<div class="qr-card sun"><div class="qrbox" id="qr-play"></div><h3>Everyone else</h3><p>Scan to join and guess</p></div></section>'+
+      '<section><div class="statusrow"><div class="cnt" id="pcount"></div></div><div class="chips" id="chips" style="margin-top:12px"></div></section>'+
+      '<p class="status" id="status"></p></main>',
+      ()=>{ $('#qr-host').innerHTML=qrSvg(base+'?r='+ROOM+'&v=host'); $('#qr-play').innerHTML=qrSvg(base+'?r='+ROOM+'&v=play'); });
+    const ps=players();
+    $('#pcount').textContent=ps.length+(ps.length===1?' player':' players')+' in the room';
+    setHtml($('#chips'),chipsHtml());
+    $('#status').textContent=r.hostId?hn+' is setting the secret numbers. Hang tight.':'Waiting for '+hn+' to scan the pink code.';
+    return;
+  }
+  if(r.phase==='done'){ mount('tv-done',doneHtml(true),()=>{pop(true);setTimeout(()=>pop(true),700)}); return; }
+  const q=r.questions[r.qi]; if(!q)return;
+  const rev=revealFor(q.id);
+  const head='<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div>';
+  if(r.rphase==='reveal'&&rev){
+    const best=rev.results.some(x=>x.best);
+    mount('tv-r-'+r.qi,'<main class="wrap">'+tvHead()+head+'<h1 class="tvq">'+esc(q.text)+'</h1>'+scaleBar(q,pinsFrom(rev),rev.actual)+
+      '<div class="tvgrid"><section><h2 class="qlabel" style="margin-bottom:8px">This round</h2>'+resultsHtml(rev)+'</section><section><h2 class="qlabel" style="margin-bottom:8px">Scoreboard</h2>'+leaderboardHtml(rev)+'</section></div></main>',
+      ()=>{animatePins(); if(best)setTimeout(()=>pop(false),1700);});
+    return;
+  }
+  mount('tv-g-'+r.qi,'<main class="wrap">'+tvHead()+head+'<h1 class="tvq">'+esc(q.text)+'</h1>'+scaleBar(q,[],null)+
+    '<div class="statusrow"><div class="cnt" id="lockcount"></div></div><div class="chips" id="chips"></div></main><div class="lockover" id="lockover" hidden><span id="count">5</span><small>Locking guesses</small></div>');
+  const gs=guessesFor(q.id), done=new Set(gs.map(g=>g.data.pid)), ps=players();
+  $('#lockcount').textContent=done.size+' of '+ps.length+' locked in';
+  setHtml($('#chips'),chipsHtml(done));
+  syncLockOverlay(r);
+}
+function syncLockOverlay(r){
+  const el=$('#lockover'); if(!el)return;
+  if(r.rphase==='locking'){ if(!lockSeen[r.qi])lockSeen[r.qi]=Date.now(); el.hidden=false; const left=Math.max(1,Math.ceil((lockSeen[r.qi]+LOCK_MS-Date.now())/1000)); $('#count').textContent=left; }
+  else el.hidden=true;
+}
+
+/* ---------- final screen (TV + phones) ---------- */
+function doneHtml(tv){
+  const ps=players(); const top=[ps[1],ps[0],ps[2]];
+  const h=[62,100,46], rank=['2','1','3'];
+  const pod=top.map((p,i)=>p?'<div class="step"><div class="pname">'+esc(p.name)+'</div><div class="psc">'+p.score+' pts</div><div class="bar" style="--c:'+colorFor(p.pid)+';height:'+h[i]+'%">'+rank[i]+'</div></div>':'<div class="step"></div>').join('');
+  const rest=ps.slice(3);
+  return '<main class="wrap">'+(tv?tvHead():'<div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div>')+
+    '<h1 class="h1" style="text-align:center">'+(ps[0]?esc(ps[0].name)+' wins!':'Game over')+'</h1><div class="podium">'+pod+'</div>'+
+    (rest.length?'<div class="res">'+rest.map((p,i)=>'<div class="res-row" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+4)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div>':'')+'</main>';
+}
+
+/* ---------- host phone ---------- */
+function loadHq(){
+  const saved=store.get('bday_hq_'+ROOM);
+  if(saved){ try{hq=JSON.parse(saved);return}catch(e){} }
+  const n=(R()&&R().hostName)||'Aman';
+  hq=DEFAULTS.map((d,i)=>({id:'d'+(i+1),text:d[0].replace(/\{n\}/g,n),left:d[1],right:d[2],secret:null}));
+  saveHq();
+}
+const saveHq=()=>store.set('bday_hq_'+ROOM,JSON.stringify(hq));
+const secretFor=id=>{const q=hq.find(x=>x.id===id);return q?q.secret:null};
+
+function qCard(q,i){
+  return '<article class="qcard'+(q.secret==null?' unset':'')+'" data-id="'+q.id+'"><div class="qtop"><span class="qnum">'+(i+1)+'</span><p class="qt2">'+esc(q.text)+'</p><button class="x" data-del aria-label="Remove question">×</button></div>'+
+  '<div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div>'+
+  '<input type="range" class="rng" min="0" max="100" value="'+(q.secret==null?50:q.secret)+'" data-rng aria-label="Your secret number">'+
+  '<div class="qval"><b data-val>'+(q.secret==null?'–':q.secret)+'</b><small data-hint>'+(q.secret==null?'Drag to include this question':'Locked in')+'</small></div></article>';
+}
+function patchStart(){
+  const n=hq.filter(q=>q.secret!=null).length, b=$('#start'); if(!b)return;
+  b.disabled=n===0; b.textContent=n?'Start game ('+n+' question'+(n===1?'':'s')+')':'Set at least one number';
+  $('#startnote').textContent=n?'Questions without a number are skipped.':'';
+}
+function renderHost(){
+  const r=R(), hn=r.hostName||'Aman';
+  if(!hq.length)loadHq();
+  if(!r.hostId){ put('room:'+ROOM,'room',{...r,hostId:myHost()}); return; }
+  if(r.hostId!==myHost()){
+    mount('h-taken','<main class="wrap"><div class="brand">Spectrum Party</div><h1 class="h1">Someone is already hosting</h1><p class="lede">Only one phone can run the game. If that was you on another browser, take over here. Your secret numbers live on the old browser, so you would need to set them again.</p><button id="takeover" class="btn hot">Take over as host</button></main>',
+      ()=>{$('#takeover').onclick=async()=>{store.set('bday_hq_'+ROOM,'');hq=[];await put('room:'+ROOM,'room',{...R(),hostId:myHost()});}});
+    return;
+  }
+  if(r.phase==='setup'){
+    mount('h-setup:'+hq.map(q=>q.id).join(','),
+      '<main class="wrap"><header class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></header>'+
+      '<h1 class="h1">Set your secret numbers</h1><p class="lede">Drag each slider to where you really sit. Nobody else sees these. A question you leave untouched is skipped.</p>'+
+      '<div class="sugg" id="sugg"></div><div id="qlist" style="display:flex;flex-direction:column;gap:12px">'+hq.map(qCard).join('')+'</div>'+
+      '<details class="card"><summary>Add your own question</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px"><label for="nq-text">Statement</label><input id="nq-text" maxlength="120" placeholder="'+esc(hn)+' sings in the shower."><label for="nq-scale">Scale</label><select id="nq-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'<option value="custom">Custom…</option></select><div id="nq-custom" hidden style="display:flex;flex-direction:column;gap:10px"><input id="nq-left" maxlength="24" placeholder="Left end"><input id="nq-right" maxlength="24" placeholder="Right end"></div><button id="nq-add" class="btn sun">Add question</button></div></details>'+
+      '<div class="startbar"><button id="start" class="btn hot big">Start game</button><small id="startnote"></small></div></main>',
+      bindHostSetup);
+    patchStart(); patchSugg();
+    return;
+  }
+  if(r.phase==='done'){ mount('h-done','<main class="wrap"><div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div><h1 class="h1">That is a wrap</h1><p class="lede">Check the main screen for the podium. You can close this page.</p></main>'); return; }
+  const q=r.questions[r.qi]; if(!q)return; const rev=revealFor(q.id);
+  mount('h-play-'+r.qi,'<main class="wrap"><div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div>'+
+    '<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div><h1 class="qt">'+esc(q.text)+'</h1>'+
+    '<div class="mine"><span class="lede">Your secret number</span><b>'+(secretFor(q.id)==null?'?':secretFor(q.id))+'</b></div>'+
+    '<p class="lede" id="hstatus"></p><div class="btnrow"><button id="revealNow" class="btn">Reveal now</button><button id="nextQ" class="btn hot" hidden></button></div>'+
+    '<p class="warn">Keep this screen open. It runs the game.</p></main>',
+    ()=>{ $('#revealNow').onclick=()=>doReveal(); $('#nextQ').onclick=nextQuestion; });
+  const gs=guessesFor(q.id).length, n=players().length;
+  const reveal=r.rphase==='reveal';
+  $('#hstatus').textContent=reveal?'Round scored. Ready when you are.':(r.rphase==='locking'?'Locking guesses…':gs+' of '+n+' players have guessed.');
+  $('#revealNow').hidden=reveal||r.rphase==='locking';
+  const nb=$('#nextQ'); nb.hidden=!reveal; nb.textContent=r.qi+1>=r.questions.length?'Finish game':'Next question';
+}
+function bindHostSetup(){
+  const ql=$('#qlist');
+  const setSecret=el=>{ const card=el.closest('.qcard'); if(!card)return; const q=hq.find(x=>x.id===card.dataset.id); if(!q)return; q.secret=parseInt(el.value,10); saveHq(); card.classList.remove('unset'); card.querySelector('[data-val]').textContent=q.secret; card.querySelector('[data-hint]').textContent='Locked in'; patchStart(); };
+  ql.addEventListener('input',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
+  ql.addEventListener('change',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
+  ql.addEventListener('pointerup',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
+  ql.addEventListener('click',e=>{const b=e.target.closest('[data-del]'); if(!b)return; const id=b.closest('.qcard').dataset.id; hq=hq.filter(q=>q.id!==id); saveHq(); queueRender();});
+  $('#nq-scale').onchange=()=>{$('#nq-custom').hidden=$('#nq-scale').value!=='custom'; $('#nq-custom').style.display=$('#nq-custom').hidden?'none':'flex';};
+  $('#nq-add').onclick=()=>{
+    const text=($('#nq-text').value||'').trim(); if(!text){toast('Write the statement first');return}
+    const k=$('#nq-scale').value; let left,right;
+    if(k==='custom'){left=($('#nq-left').value||'').trim()||'Never';right=($('#nq-right').value||'').trim()||'Always';} else {[left,right]=SCALES[k];}
+    hq.push({id:'c'+rid(6),text,left,right,secret:null}); saveHq(); queueRender(); setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50);
+  };
+  $('#sugg').addEventListener('click',async e=>{
+    const a=e.target.closest('[data-add]'), d=e.target.closest('[data-dismiss]');
+    const sid=(a||d)&&(a||d).dataset.sid; if(!sid)return; const row=cache.get(sid); if(!row)return;
+    if(a){ hq.push({id:'s'+rid(6),text:row.data.text,left:row.data.left,right:row.data.right,secret:null}); saveHq(); toast('Added at the bottom. Set its number.'); }
+    await put(sid,'sugg',{...row.data,status:a?'used':'dismissed'});
+  });
+  $('#start').onclick=async()=>{
+    const list=hq.filter(q=>q.secret!=null).map(({id,text,left,right})=>({id,text,left,right})); if(!list.length)return;
+    $('#start').disabled=true; $('#start').textContent='Starting…';
+    await put('room:'+ROOM,'room',{...R(),phase:'playing',questions:list,qi:0,rphase:'guess'});
+  };
+}
+function patchSugg(){
+  const el=$('#sugg'); if(!el)return;
+  const list=rows('sugg').filter(r=>r.data.status==='new');
+  setHtml(el,list.length?'<h2 class="qlabel">Suggested by players ('+list.length+')</h2>'+list.map(r=>'<div class="sugg-item"><p>'+esc(r.data.text)+'<small>'+esc(r.data.left)+' ↔ '+esc(r.data.right)+' · from '+esc(r.data.by||'a player')+'</small></p><button class="btn sun" data-add data-sid="'+r.id+'">Add</button><button class="btn ghost" data-dismiss data-sid="'+r.id+'">Skip</button></div>').join(''):'');
+}
+
+/* ---------- host engine ---------- */
+let eng={qi:-1,locking:false,revealed:false,first:0};
+function engineTick(){
+  if(VIEW!=='host')return; const r=R();
+  if(!r||r.phase!=='playing'||r.hostId!==myHost())return;
+  const q=r.questions[r.qi]; if(!q)return;
+  if(eng.qi!==r.qi) eng={qi:r.qi,locking:false,revealed:false,first:0};
+  if(r.rphase==='guess'&&!eng.locking&&!eng.revealed){
+    const g=guessesFor(q.id).length, n=players().length;
+    if(g>0&&!eng.first)eng.first=Date.now();
+    if((n>0&&g>=n)||(eng.first&&Date.now()-eng.first>CAP_MS)) startLock();
+  } else if(r.rphase==='locking'&&!eng.locking&&!eng.revealed){ eng.locking=true; setTimeout(doReveal,2000); }
+}
+async function startLock(){
+  if(eng.locking||eng.revealed)return; eng.locking=true;
+  await put('room:'+ROOM,'room',{...R(),rphase:'locking'});
+  setTimeout(doReveal,LOCK_MS);
+}
+async function doReveal(){
+  const r=R(); if(!r||r.phase!=='playing'||r.rphase==='reveal'||eng.revealed)return; eng.revealed=true;
+  await loadRoom();
+  const q=r.questions[r.qi]; const actual=secretFor(q.id); if(actual==null){toast('Secret number missing on this phone');return}
+  if(!revealFor(q.id)){
+    const gs=guessesFor(q.id), ps=players();
+    const res=ps.map(p=>{const g=gs.find(x=>x.data.pid===p.pid); const v=g?g.data.value:null; return {pid:p.pid,name:p.name,value:v,dist:v==null?null:Math.abs(v-actual),pts:0,best:false}});
+    const dists=res.filter(x=>x.dist!=null).map(x=>x.dist); const bestD=dists.length?Math.min(...dists):null;
+    res.forEach(x=>{ if(x.dist==null)return; x.best=x.dist===bestD; x.pts=tierPts(x.dist)+(x.best?3:0); });
+    await put('reveal:'+ROOM+':'+q.id,'reveal',{qid:q.id,actual,results:res});
+    for(const x of res){ const p=ps.find(y=>y.pid===x.pid); await put('player:'+ROOM+':'+x.pid,'player',{name:p.name,score:p.score+x.pts}); }
+  }
+  await put('room:'+ROOM,'room',{...R(),rphase:'reveal'});
+}
+async function nextQuestion(){
+  const r=R(); $('#nextQ').disabled=true;
+  if(r.qi+1<r.questions.length) await put('room:'+ROOM,'room',{...r,qi:r.qi+1,rphase:'guess'});
+  else await put('room:'+ROOM,'room',{...r,phase:'done'});
+}
+
+/* ---------- player phone ---------- */
+const pHead=()=>'<div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div>';
+function renderPlayer(){
+  const r=R(), hn=r.hostName||'Aman';
+  const pid=store.get('bday_pid_'+ROOM), prow=pid&&cache.get('player:'+ROOM+':'+pid);
+  if(!prow){
+    mount('p-join','<main class="wrap">'+pHead()+'<h1 class="h1">Join the game</h1><p class="lede">Can you read '+esc(hn)+' better than your friends can?</p><section class="card"><label for="pname">Your name</label><input id="pname" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'"><button id="pjoin" class="btn sun big">Join</button></section></main>',
+      ()=>{ const go=async()=>{const name=($('#pname').value||'').trim(); if(!name){toast('Type your name');return} store.set('bday_name',name); const id=pid||('p'+rid(8)); store.set('bday_pid_'+ROOM,id); $('#pjoin').disabled=true; await put('player:'+ROOM+':'+id,'player',{name,score:0});}; $('#pjoin').onclick=go; $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
+    return;
+  }
+  const me=players().find(p=>p.pid===pid)||{name:prow.data.name,score:prow.data.score||0,pid};
+  if(r.phase==='setup'){
+    mount('p-wait','<main class="wrap">'+pHead()+'<h1 class="h1">You are in, '+esc(me.name)+'.</h1><p class="lede" id="pwait"></p>'+
+      '<section class="card"><h2>Suggest a question</h2><p class="lede">Something '+esc(hn)+' will have to dodge. '+esc(hn)+' decides if it goes in.</p><label for="sg-text">Statement</label><input id="sg-text" maxlength="120" placeholder="'+esc(hn)+' has stalked an ex online."><label for="sg-scale">Scale</label><select id="sg-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'</select><button id="sg-send" class="btn sun">Send to '+esc(hn)+'</button></section>'+
+      '<section><h2 class="qlabel" style="margin-bottom:8px">In the room</h2><div class="chips" id="chips"></div></section></main>',
+      ()=>{ $('#sg-send').onclick=async()=>{const text=($('#sg-text').value||'').trim(); if(!text){toast('Write the statement first');return} const [l,rr]=SCALES[$('#sg-scale').value]; await put('sugg:'+ROOM+':'+rid(8),'sugg',{text,left:l,right:rr,by:me.name,status:'new'}); $('#sg-text').value=''; toast('Sent to '+hn);}; });
+    $('#pwait').textContent=r.hostId?'Waiting for '+hn+' to start the game.':'Waiting for the game to be set up.';
+    setHtml($('#chips'),chipsHtml());
+    return;
+  }
+  if(r.phase==='done'){
+    const ps=players(), rank=ps.findIndex(p=>p.pid===pid)+1;
+    mount('p-done','<main class="wrap">'+pHead()+'<h1 class="h1">Final result</h1><div class="card" style="align-items:center;text-align:center"><div class="qlabel">You finished</div><div class="bigpts" style="color:var(--sun)">#'+rank+'</div><p class="lede">'+me.score+' points</p></div>'+
+      '<div class="res">'+ps.map((p,i)=>'<div class="res-row'+(p.pid===pid?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+1)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div></main>',()=>{if(rank===1)pop(true)});
+    return;
+  }
+  const q=r.questions[r.qi]; if(!q)return;
+  const rev=revealFor(q.id), mine=cache.get('guess:'+ROOM+':'+q.id+':'+pid);
+  const head=pHead()+'<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div><h1 class="qt">'+esc(q.text)+'</h1>';
+  if(r.rphase==='reveal'&&rev){
+    const x=rev.results.find(y=>y.pid===pid)||{value:null,pts:0};
+    const rank=players().findIndex(p=>p.pid===pid)+1;
+    mount('p-r-'+r.qi,'<main class="wrap">'+head+scaleBar(q,pinsFrom(rev),rev.actual)+
+      '<div class="card" style="text-align:center"><div class="qlabel">'+esc(hn)+' landed on</div><div class="bigpts" style="color:var(--hot)">'+rev.actual+'</div>'+
+      '<div class="you-line"><span>You said</span><span>'+(x.value==null?'no guess':x.value)+'</span></div><div class="you-line"><span>This round</span><span style="color:var(--mint)">+'+x.pts+'</span></div><div class="you-line"><span>Total</span><span>'+me.score+' · rank '+rank+'</span></div>'+(x.best?'<span class="tag">Closest!</span>':'')+'</div>'+
+      '<p class="warn">Look at the big screen for everyone\'s guesses.</p></main>',()=>{animatePins();if(x.best)setTimeout(()=>pop(false),1700)});
+    return;
+  }
+  if(mine){
+    mount('p-l-'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><div class="qlabel">Locked in</div><div class="bigpts" style="color:var(--sun)">'+mine.data.value+'</div><p class="lede" id="lstat"></p></div></main><div class="lockover" id="lockover" hidden><span id="count">5</span><small>Locking guesses</small></div>');
+    const n=players().length, g=guessesFor(q.id).length;
+    $('#lstat').textContent=r.rphase==='locking'?'Revealing in a moment…':g+' of '+n+' locked in. Waiting for the rest.';
+    syncLockOverlay(r);
+    return;
+  }
+  if(r.rphase!=='guess'){
+    mount('p-late-'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><p class="lede">This round already locked. Catch the next one.</p></div></main>');
+    return;
+  }
+  mount('p-g-'+r.qi,'<main class="wrap">'+head+'<p class="lede">Where did '+esc(hn)+' place himself? Ask him anything, then drag.</p>'+
+    '<div class="card"><div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div><input id="gr" type="range" class="rng" min="0" max="100" value="50" aria-label="Your guess"><div class="bignum" id="gv">50</div></div>'+
+    '<button id="lock" class="btn sun big">Lock it in</button></main>',
+    ()=>{ const gr=$('#gr'); gr.addEventListener('input',()=>{$('#gv').textContent=gr.value}); $('#lock').onclick=async()=>{ $('#lock').disabled=true; await put('guess:'+ROOM+':'+q.id+':'+pid,'guess',{qid:q.id,pid,value:parseInt(gr.value,10)}); }; });
+}
+
+/* ---------- boot ---------- */
+function render(){
+  if(!ROOM){ mount('landing',landingHtml(),bindLanding); return; }
+  if(!roomRow()){
+    if(!loaded){ mount('loading','<div class="center">Loading…</div>'); return; }
+    mount('noroom','<main class="wrap"><div class="brand">Spectrum Party</div><h1 class="h1">Room '+ROOM+' not found</h1><p class="lede">Check the code and try again.</p><a class="btn sun" style="text-align:center;text-decoration:none" href="'+base+'">Back</a></main>'); return;
+  }
+  if(VIEW==='tv')renderTV(); else if(VIEW==='host')renderHost(); else renderPlayer();
+}
+function tickUI(){ const r=R(); if(r&&r.phase==='playing')syncLockOverlay(r); }
+async function startRoom(){
+  await loadRoom(); loaded=true; subscribe(); curSig=''; render();
+  setInterval(engineTick,500); setInterval(tickUI,250);
+}
+function boot(){
+  if(!window.supabase){ app.className='center'; app.textContent='Could not load the game libraries. Check your connection and reload.'; return; }
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});
+  if(!ROOM){ render(); return; }
+  startRoom();
+}
+boot();
+})();
+</script>
+</body>
+</html>
