@@ -70,6 +70,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .chip i{font-style:normal;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--c,var(--cyan));color:var(--ink);font-weight:800;font-size:12px}
 .chip.done{border-color:var(--mint)} .chip.done::after{content:"✓";color:var(--mint);font-weight:800}
 .kick{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 0 0 2px}
+.chip.armed{border-color:var(--hot)} .chip.armed .kick{color:var(--hot);font-size:13px;font-weight:800}
 .qlabel{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .qt{font-family:var(--display);font-weight:700;font-size:clamp(17px,4.9vw,24px);line-height:1.28;text-wrap:balance}
 .pill{display:inline-block;align-self:flex-start;padding:6px 14px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-weight:700;font-size:14px}
@@ -169,13 +170,34 @@ body.tv .wrap{max-width:1500px;gap:clamp(12px,2vw,28px)}
 .side{gap:clamp(10px,1.4vw,18px)}
 .side .chips{min-height:48px}
 .side small{color:var(--muted)}
-.tvq{font-family:var(--display);font-weight:900;font-size:clamp(24px,3.9vw,64px);line-height:1.14;text-wrap:balance}
+.tvq{font-family:var(--display);font-weight:900;font-size:clamp(22px,min(3.9vw,6.6vh),64px);line-height:1.14;text-wrap:balance}
 body.tv .h1{font-size:clamp(32px,4.2vw,72px)}
 body.tv .podium{height:min(52vh,560px)}
-body.tv .compact .tvq{font-size:clamp(20px,3vw,44px)}
-body.tv .compact .track-outer{padding:64px 22px 110px}
+body.tv .compact .tvq{font-size:clamp(18px,min(3vw,5.2vh),44px)}
 .statusrow{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.statusrow small{color:var(--muted)}
 .statusrow .cnt{font-family:var(--display);font-weight:700;font-size:clamp(16px,2vw,28px);color:var(--sun)}
+.reshead{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-weight:700;font-size:clamp(11px,1.1vw,15px);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.tvres .rk{color:var(--muted);font-weight:800;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.tvres .res-row{grid-template-columns:auto auto 1fr auto auto auto}
+.tvres .g{min-width:4ch;text-align:right}
+.tvres.c2,.tvres.c3{display:block;column-gap:clamp(12px,1.6vw,28px)}
+.tvres.c2{column-count:2} .tvres.c3{column-count:3}
+.tvres.c2 .res-row,.tvres.c3 .res-row{break-inside:avoid;margin-bottom:6px}
+body.tv .compact{gap:clamp(7px,1.2vh,20px)}
+body.tv .compact .opbar .btn{padding:10px 20px}
+body.tv .compact .res-row{padding:clamp(4px,.75vh,10px) 12px;font-size:clamp(13px,1.75vh,20px)}
+body.tv .compact .lz-in{padding-top:clamp(8px,1.4vh,24px);padding-bottom:clamp(8px,1.4vh,24px)}
+body.tv .compact .track-outer{padding:60px 22px 114px}
+body.tv .compact .pin.guess{top:calc(100% + 8px + var(--lane,0)*35px)}
+body.tv .compact .pin.guess::before{height:calc(8px + var(--lane,0)*35px)}
+body.tv .compact .pin.guess i{width:32px;height:32px;font-size:13px}
+body.tv .guessing{gap:clamp(10px,2.2vh,28px)}
+body.tv .guessing .track-outer{padding:26px 22px 22px}
+body.tv .final{gap:clamp(8px,1.6vh,22px)}
+body.tv .final.many .podium{height:clamp(180px,36vh,470px)}
+body.tv .final.many .h1{font-size:clamp(28px,min(3.6vw,7vh),64px)}
+body.tv .final .res-row{padding:clamp(4px,.75vh,10px) 12px;font-size:clamp(13px,1.75vh,20px)}
 .tvgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:clamp(14px,2.4vw,36px);align-items:start}
 @media (max-width:900px){.tvgrid{grid-template-columns:1fr}}
 .opbar{display:flex;justify-content:flex-end;align-items:center;gap:14px}
@@ -277,7 +299,7 @@ const DEFAULTS=[
   ['{n} buys something just because it was on sale.',...SCALES.me],
   ['{n} will order the most expensive item on the menu.',...SCALES.never]
 ];
-const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432'];
+const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432','#5B8CFF','#F4F1E8','#2EC4B6','#FF6B6B'];
 const LOCK_MS=4000, CAP_MS=60000, PEND_MS=5000;
 
 /* ---------- helpers ---------- */
@@ -288,11 +310,29 @@ const sstore={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
 /* Player identity is per browser TAB (sessionStorage), so several people can join from tabs of one browser
    without becoming the same player. localStorage only remembers it so a phone can get back in under the same name. */
 let MYPID=null;
-const myPid=()=>MYPID||(MYPID=sstore.get('bday_pid_'+ROOM)||null);
+const myPid=()=>{ if(MYPID===null)MYPID=sstore.get('bday_pid_'+ROOM)||''; return MYPID||null; };
 const rid=n=>{const a='abcdefghijklmnopqrstuvwxyz0123456789';let s='';for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const clean=s=>String(s||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
-const colorFor=pid=>{let h=0;for(const c of String(pid))h=(h*31+c.charCodeAt(0))>>>0;return PALETTE[h%PALETTE.length]};
+const hashColor=pid=>{let h=0;for(const c of String(pid))h=(h*31+c.charCodeAt(0))>>>0;return PALETTE[h%PALETTE.length]};
+/* every player row ever seen (kicked ones too), in join order: colours and labels never shift mid-game */
+function joinOrder(){
+  return rows('player').map(r=>({pid:r.id.split(':')[2],name:r.data.name||'?',at:r.data.at||Date.parse(r.updated_at)||0}))
+    .sort((a,b)=>a.at-b.at||(a.pid<b.pid?-1:1));
+}
+function colorFor(pid){ const i=joinOrder().findIndex(p=>p.pid===pid); return i<0?hashColor(pid):PALETTE[i%PALETTE.length]; }
+function labelFor(pid,name){
+  const all=joinOrder(), cnt={}, out={}, used=new Set(), first=n=>(String(n).trim()[0]||'?').toUpperCase();
+  all.forEach(p=>{const f=first(p.name);cnt[f]=(cnt[f]||0)+1});
+  for(const p of all){
+    const one=first(p.name), nm=String(p.name).replace(/\s+/g,'');
+    if(cnt[one]===1){out[p.pid]=one;continue}
+    let lab=null; for(let j=1;j<nm.length&&!lab;j++){const c=one+nm[j].toLowerCase(); if(!used.has(c))lab=c}
+    if(!lab){let k=2;while(used.has(one+k))k++;lab=one+k}
+    used.add(lab); out[p.pid]=lab;
+  }
+  return out[pid]||first(name);
+}
 const initial=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
 const tierPts=d=>d<=3?10:d<=8?7:d<=15?5:d<=25?3:d<=40?1:0;
 function toast(msg,bad){ const t=document.createElement('div'); t.className='toast'+(bad?' bad':''); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
@@ -398,10 +438,20 @@ function enterRoom(view){
 }
 
 /* ---------- shared widgets ---------- */
+let armKick=null;
 function chipsHtml(done,kick){
   const ps=players(); if(!ps.length)return '<span class="code">Nobody yet.</span>';
-  return ps.map(p=>'<span class="chip'+(done&&done.has(p.pid)?' done':'')+'" style="--c:'+colorFor(p.pid)+'"><i>'+esc(initial(p.name))+'</i>'+esc(p.name)+
-    (kick?'<button class="kick" data-kick="'+esc(p.pid)+'" aria-label="Remove '+esc(p.name)+'">×</button>':'')+'</span>').join('');
+  const armed=armKick&&Date.now()-armKick.t<4000?armKick.pid:null;
+  return ps.map(p=>'<span class="chip'+(done&&done.has(p.pid)?' done':'')+(armed===p.pid?' armed':'')+'" style="--c:'+colorFor(p.pid)+'"><i>'+esc(labelFor(p.pid,p.name))+'</i>'+esc(p.name)+
+    (kick?'<button class="kick" data-kick="'+esc(p.pid)+'" aria-label="Remove '+esc(p.name)+'">'+(armed===p.pid?'Remove?':'×')+'</button>':'')+'</span>').join('');
+}
+function bindKick(el){
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('[data-kick]'); if(!b)return; const pid=b.dataset.kick;
+    if(armKick&&armKick.pid===pid&&Date.now()-armKick.t<4000){ armKick=null; put('gone:'+ROOM+':'+pid,'gone',{at:Date.now()}); }
+    else { armKick={pid,t:Date.now()}; }
+    queueRender();
+  });
 }
 function scaleBar(q,pins,actual){
   const sorted=[...pins].sort((a,b)=>a.v-b.v);
@@ -414,21 +464,28 @@ function leaderboardHtml(rev){
   const byPid={}; if(rev)rev.results.forEach(x=>byPid[x.pid]=x);
   return '<div class="res">'+players().map(p=>{const x=byPid[p.pid];return '<div class="res-row'+(x&&x.best?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+esc(p.name)+'</span><span class="pts">'+(x?'+'+x.pts:'')+'</span><span class="tot">'+p.score+'</span></div>'}).join('')+'</div>';
 }
+function tvResultsHtml(rev){
+  const by={}; rev.results.forEach(x=>by[x.pid]=x);
+  const ps=players(), cols=ps.length>14?' c3':ps.length>6?' c2':'';
+  return '<div class="res tvres'+cols+'">'+ps.map(p=>{const x=by[p.pid];
+    return '<div class="res-row'+(x&&x.best?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="rk">'+rankOf(p.pid)+'</span><span class="dot"></span><span class="nm">'+esc(p.name)+'</span><span class="g">'+(!x?'':x.value==null?'no guess':x.value)+'</span><span class="pts">'+(x?'+'+x.pts:'')+'</span><span class="tot">'+p.score+'</span></div>'}).join('')+'</div>';
+}
+function rankOf(pid){ const ps=players(), me=ps.find(p=>p.pid===pid); return me?1+ps.filter(p=>p.score>me.score).length:0; }
 function resultsHtml(rev){
   const rs=[...rev.results].sort((a,b)=>b.pts-a.pts||(a.dist==null)-(b.dist==null));
   return '<div class="res">'+rs.map(x=>'<div class="res-row'+(x.best?' best':'')+'" style="--c:'+colorFor(x.pid)+'"><span class="dot"></span><span class="nm">'+esc(x.name)+'</span><span class="g">'+(x.value==null?'no guess':x.value)+'</span><span class="pts">+'+x.pts+'</span></div>').join('')+'</div>';
 }
-const pinsFrom=rev=>rev.results.filter(x=>x.value!=null).map(x=>({v:x.value,t:initial(x.name),c:colorFor(x.pid),best:x.best}));
+const pinsFrom=rev=>rev.results.filter(x=>x.value!=null).map(x=>({v:x.value,t:labelFor(x.pid,x.name),c:colorFor(x.pid),best:x.best}));
 function doneHtml(tv){
   const ps=players(), top=[ps[1],ps[0],ps[2]], h=[62,100,46], rank=['2','1','3'], medal=['#C9D3E8','#F5C84B','#D08A4E'];
   const pod=top.map((p,i)=>p?'<div class="step"><div class="pname">'+esc(p.name)+'</div><div class="psc">'+p.score+(p.score===1?' pt':' pts')+'</div><div class="bar" style="--c:'+medal[i]+';--k:'+(h[i]/100)+'">'+rank[i]+'</div></div>':'<div class="step"></div>').join('');
   const rest=ps.slice(3);
-  return '<main class="wrap">'+(tv?tvHead():pHead())+'<h1 class="h1" style="text-align:center">'+(ps[0]?esc(ps[0].name)+' wins!':'Game over')+'</h1><div class="podium">'+pod+'</div>'+
-    (rest.length?'<div class="res">'+rest.map((p,i)=>'<div class="res-row" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+4)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div>':'')+
+  return '<main class="wrap final'+(rest.length?' many':'')+'">'+(tv?tvHead():pHead())+'<h1 class="h1" style="text-align:center">'+(ps[0]?esc(ps[0].name)+' wins!':'Game over')+'</h1><div class="podium">'+pod+'</div>'+
+    (rest.length?'<div class="res'+(tv&&rest.length>10?' tvres c3':tv&&rest.length>4?' tvres c2':'')+'">'+rest.map((p,i)=>'<div class="res-row" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+rankOf(p.pid)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div>':'')+
     (tv?'<div class="opbar"><a class="btn" href="'+esc(base)+'">New game</a></div>':'')+'</main>';
 }
-const pHead=()=>'<div class="phead"><span class="brand">Kaun Banega <em class="hl">AMAN</em>aire</span><span class="code">Room<b>'+esc(ROOM)+'</b></span></div>';
-const tvHead=()=>'<header class="tvhead"><div class="brand">Kaun Banega <em class="hl">AMAN</em>aire</div><div class="code">Room<b>'+esc(ROOM)+'</b></div></header>';
+const pHead=()=>'<div class="phead"><span class="brand"><span>Kaun Banega <em class="hl">AMAN</em>aire</span></span><span class="code">Room<b>'+esc(ROOM)+'</b></span></div>';
+const tvHead=()=>'<header class="tvhead"><div class="brand"><span>Kaun Banega <em class="hl">AMAN</em>aire</span></div><div class="code">Room<b>'+esc(ROOM)+'</b></div></header>';
 
 /* ---------- landing ---------- */
 function landingHtml(){
@@ -448,9 +505,9 @@ function bindLanding(){
   enter('#jCode','#jGo');enter('#jName','#jGo');enter('#hCode','#hGo');enter('#hPin','#hGo');enter('#cName','#cGo');enter('#cPin','#cGo');
   $('#jGo').onclick=landingJoin; $('#hGo').onclick=landingHost; $('#cGo').onclick=landingCreate;
 }
-async function joinAs(code,name,pid){
-  const id=pid||('p'+rid(7));
-  const ok=await put('player:'+code+':'+id,'player',{name},code);
+async function joinAs(code,name,pid,at){
+  const id=pid||('p'+rid(7)), prev=cache.get('player:'+code+':'+id);
+  const ok=await put('player:'+code+':'+id,'player',{name,at:at||(prev&&prev.data.at)||Date.now()},code);
   if(!ok){toast('Could not join. Check your internet and try again.',true);return false}
   MYPID=id; sstore.set('bday_pid_'+code,id); store.set('bday_pid_'+code,id); store.set('bday_name',name); sstore.set('bday_name',name); ROOM=code; enterRoom('play'); return true;
 }
@@ -460,17 +517,17 @@ async function landingJoin(){
   if(!name)return toast('Type your name',true);
   const btn=$('#jGo'); btn.disabled=true;
   try{
-    const rs=await api('GET','?select=id,kind,data&room=eq.'+code+'&kind=in.(room,player)');
+    const rs=await api('GET','?select=id,kind,data&room=eq.'+code+'&kind=in.(room,player,gone)');
     if(!rs.some(r=>r.id==='room:'+code)){toast('No room with that code. Check the big screen.',true);return}
-    const pl=rs.filter(r=>r.kind==='player'), same=n=>(n||'').trim().toLowerCase()===name.toLowerCase();
+    const goneIds=new Set(rs.filter(r=>r.kind==='gone').map(r=>r.id.split(':')[2])), pl=rs.filter(r=>r.kind==='player'&&!goneIds.has(r.id.split(':')[2])), same=n=>(n||'').trim().toLowerCase()===name.toLowerCase();
     for(const mine of [sstore.get('bday_pid_'+code),store.get('bday_pid_'+code)]){
       const row=mine&&pl.find(r=>r.id==='player:'+code+':'+mine);
-      if(row&&same(row.data.name)){ await joinAs(code,row.data.name,mine); return }
+      if(row&&same(row.data.name)){ await joinAs(code,row.data.name,mine,row.data.at); return }
     }
     const dup=pl.find(r=>(r.data.name||'').trim().toLowerCase()===name.toLowerCase());
     if(dup){
       $('#jMsg').innerHTML='<p class="warn" style="margin:10px 0">Someone named '+esc(dup.data.name)+' is already in this room.</p><div class="btnrow"><button id="jMe" class="btn">That\'s me</button><button id="jOther" class="btn sun">Someone else</button></div>';
-      $('#jMe').onclick=()=>joinAs(code,dup.data.name,dup.id.split(':')[2]);
+      $('#jMe').onclick=()=>joinAs(code,dup.data.name,dup.id.split(':')[2],dup.data.at);
       $('#jOther').onclick=()=>{$('#jMsg').innerHTML='';$('#jName').focus();toast('Add an initial, like "'+name+' B"')};
       return;
     }
@@ -570,20 +627,20 @@ function renderTV(){
     const best=rev.results.some(x=>x.best);
     const last=r.qi+1>=r.questions.length;
     mount('tv-r-'+r.qi,'<main class="wrap compact">'+tvHead()+head+lz('<h1 class="tvq">'+esc(q.text)+'</h1>')+scaleBar(q,pinsFrom(rev),rev.actual)+
-      '<div class="tvgrid"><section><h2 class="qlabel" style="margin-bottom:8px">This round</h2>'+resultsHtml(rev)+'</section><section><h2 class="qlabel" style="margin-bottom:8px">Scoreboard</h2><div id="board"></div></section></div>'+
+      '<section class="tvboard"><div class="reshead"><span>Scoreboard</span><span>guess · this round · total</span></div><div id="board"></div></section>'+
       '<div class="opbar"><small>Press Space</small><button id="tvAct" class="btn hot big">'+(last?'Show final results':'Next question')+'</button></div></main>',
       ()=>{animatePins(); if(best)setTimeout(()=>pop(false),1700); $('#tvAct').onclick=nextQuestion;});
-    setHtml($('#board'),leaderboardHtml(rev));
+    setHtml($('#board'),tvResultsHtml(rev));
     return;
   }
-  mount('tv-g-'+r.qi,'<main class="wrap">'+tvHead()+head+lz('<h1 class="tvq">'+esc(q.text)+'</h1>')+scaleBar(q,[],null)+
-    '<div class="statusrow"><div class="cnt" id="lockcount"></div></div><div class="chips" id="chips"></div>'+
+  mount('tv-g-'+r.qi,'<main class="wrap guessing">'+tvHead()+head+lz('<h1 class="tvq">'+esc(q.text)+'</h1>')+scaleBar(q,[],null)+
+    '<div class="statusrow"><div class="cnt" id="lockcount"></div><small>Someone left the party? Tap × twice on their name.</small></div><div class="chips" id="chips"></div>'+
     '<div class="opbar"><small>Reveals as soon as every phone has locked in</small><button id="tvAct" class="btn">Reveal now</button></div></main>'+
     '<div class="lockover" id="lockover" hidden><div class="drum">🥁</div><span id="dtxt">Drum roll…</span><small>Everyone is locked in</small></div>',
-    ()=>{$('#tvAct').onclick=()=>doReveal(true);});
+    ()=>{$('#tvAct').onclick=()=>doReveal(true); bindKick($('#chips'));});
   const ps=players(), done=new Set(answered(ps,q.id).map(p=>p.pid));
   setText($('#lockcount'),done.size+' of '+ps.length+' locked in');
-  setHtml($('#chips'),chipsHtml(done));
+  setHtml($('#chips'),chipsHtml(done,true));
   syncLock(r);
 }
 function tvSetup(r,hn){
@@ -597,7 +654,7 @@ function tvSetup(r,hn){
     '<div class="btnrow"><button id="copyInv" class="btn">Copy invite link</button><button id="pinBtn" class="btn ghost">Show host PIN</button></div></div></section></main>',
     ()=>{
       $('#tvAct').onclick=()=>playIntro(startGame); $('#startNow').onclick=startGame; $('#howBtn').onclick=()=>playIntro(null);
-      $('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-kick]'); if(b)put('gone:'+ROOM+':'+b.dataset.kick,'gone',{at:Date.now()});});
+      bindKick($('#chips'));
       $('#copyInv').onclick=async()=>{const link=base+'?r='+ROOM; try{await navigator.clipboard.writeText(link);toast('Invite link copied')}catch(e){toast(link)}};
       $('#pinBtn').onclick=()=>{const p=cache.get('pin:'+ROOM); const b=$('#pinBtn'); if(b.dataset.on){b.dataset.on='';b.textContent='Show host PIN'}else{b.dataset.on='1';b.textContent='Host PIN: '+(p?p.data.pin:'?')}};
     });
@@ -777,7 +834,7 @@ async function pendTick(){
 }
 function renderPlayer(){
   const r=R(), hn=r.hostName||'Aman', pid=myPid();
-  if(pid&&rows('gone').some(g=>g.id==='gone:'+ROOM+':'+pid)){ mount('p-gone','<main class="wrap">'+pHead()+'<h1 class="h1">You were removed</h1><p class="lede">The person running the big screen took you out of this room.</p></main>'); return; }
+  if(pid&&rows('gone').some(g=>g.id==='gone:'+ROOM+':'+pid)){ mount('p-gone','<main class="wrap">'+pHead()+'<h1 class="h1">You were removed</h1><p class="lede">The person running the big screen took you out of this room. If that was a mistake, join again as a new player.</p><button id="rejoin" class="btn sun big">Join again</button></main>',()=>{$('#rejoin').onclick=()=>{MYPID='';sstore.set('bday_pid_'+ROOM,'');curSig='';render()}}); return; }
   const prow=pid&&cache.get('player:'+ROOM+':'+pid);
   if(!prow){
     mount('p-join','<main class="wrap">'+pHead()+'<h1 class="h1">Join the game</h1><p class="lede">Can you read '+esc(hn)+' better than your friends can?</p><section class="card"><label for="pname">Your name</label><input id="pname" maxlength="14" autocomplete="off" value="'+esc(sstore.get('bday_name')||'')+'"><button id="pjoin" class="btn sun big">Join</button></section></main>',
@@ -802,9 +859,9 @@ function renderPlayer(){
     return;
   }
   if(r.phase==='done'){
-    const ps=players(), rank=ps.findIndex(p=>p.pid===pid)+1;
+    const ps=players(), rank=rankOf(pid);
     mount('p-done','<main class="wrap">'+pHead()+'<h1 class="h1">Final result</h1><div class="card" style="align-items:center;text-align:center"><div class="qlabel">You finished</div><div class="bigpts" style="color:var(--sun)">#'+rank+'</div><p class="lede">'+me.score+(me.score===1?' point':' points')+'</p></div>'+
-      '<div class="res">'+ps.map((p,i)=>'<div class="res-row'+(p.pid===pid?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+1)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div></main>',()=>{if(rank===1)pop(true)});
+      '<div class="res">'+ps.map((p,i)=>'<div class="res-row'+(p.pid===pid?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+rankOf(p.pid)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div></main>',()=>{if(rank===1)pop(true)});
     return;
   }
   const q=(r.questions||[])[r.qi]; if(!q)return;
@@ -813,7 +870,7 @@ function renderPlayer(){
   const head=pHead()+'<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div>'+lz('<h1 class="qt">'+esc(q.text)+'</h1>');
   if(r.rphase==='reveal'){
     if(!rev){ mount('p-scoring:'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><p class="lede">Scoring…</p></div></main>'); return; }
-    const x=rev.results.find(y=>y.pid===pid)||{value:null,pts:0}, rank=players().findIndex(p=>p.pid===pid)+1;
+    const x=rev.results.find(y=>y.pid===pid)||{value:null,pts:0}, rank=rankOf(pid);
     mount('p-r:'+r.qi,'<main class="wrap">'+head+scaleBar(q,pinsFrom(rev),rev.actual)+
       '<div class="card" style="text-align:center"><div class="qlabel">'+esc(hn)+' landed on</div><div class="bigpts" style="color:var(--hot)">'+rev.actual+'</div>'+
       '<div class="you-line"><span>You said</span><span>'+(x.value==null?'no guess':x.value)+'</span></div><div class="you-line"><span>This round</span><span style="color:var(--mint)">+'+x.pts+'</span></div><div class="you-line"><span>Total</span><span>'+me.score+' · rank '+rank+'</span></div>'+(x.best?'<span class="tag">Closest!</span>':'')+'</div>'+
