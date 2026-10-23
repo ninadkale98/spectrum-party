@@ -99,6 +99,17 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .rng::-webkit-slider-thumb{-webkit-appearance:none;width:38px;height:38px;border-radius:50%;background:#fff;border:5px solid var(--sun);box-shadow:0 4px 14px rgba(0,0,0,.45)}
 .rng::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:5px solid var(--sun)}
 .bignum{font-family:var(--display);font-weight:900;font-size:64px;text-align:center;line-height:1;background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.scoring .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tier{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.tier b{font-family:var(--display);font-weight:900;font-size:24px;line-height:1;color:var(--gold)}
+.tier small{color:var(--muted);font-size:12px;font-weight:700}
+.sc-note{color:var(--muted);font-size:14px;line-height:1.45;margin:0}
+.sc-note b{color:var(--mint)}
+.sc-mini{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:4px}
+.tierline{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.tierline span{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+.tierline b{color:var(--gold)}
+.tierline .bonus b{color:var(--mint)}
 .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;padding:0 2px;margin-top:-4px}
 .ring{--f:1;width:clamp(120px,38vw,170px);aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--f)*1turn),rgba(255,255,255,.1) 0);display:grid;place-items:center;box-shadow:0 0 40px rgba(245,200,75,.25)}
 .ring-in{width:80%;aspect-ratio:1;border-radius:50%;background:var(--bg);display:grid;place-content:center;text-align:center}
@@ -334,7 +345,18 @@ function labelFor(pid,name){
   return out[pid]||first(name);
 }
 const initial=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
-const tierPts=d=>d<=3?10:d<=8?7:d<=15?5:d<=25?3:d<=40?1:0;
+const TIERS=[[3,10],[8,7],[15,5],[25,3],[40,1]], BONUS=3;
+const tierPts=d=>{for(const [m,p] of TIERS)if(d<=m)return p;return 0};
+function scoringHtml(hn,compact){
+  hn=esc(hn||'Aman');
+  if(compact){
+    return '<div class="tierline" aria-label="Scoring">'+TIERS.map(([m,p],i)=>'<span>±'+m+' → <b>'+p+'</b></span>').join('')+'<span class="bonus">closest <b>+'+BONUS+'</b></span></div>';
+  }
+  const rows=TIERS.map(([m,p],i)=>[(i?TIERS[i-1][0]+1:0)+'–'+m,p]).concat([['over '+TIERS[TIERS.length-1][0],0]]);
+  return '<section class="card scoring"><h2>How scoring works</h2><p class="lede">'+hn+' secretly puts himself somewhere on a 0–100 bar. The closer your guess, the more you get.</p>'+
+    '<div class="tiers">'+rows.map(([r,p])=>'<div class="tier"><b>'+p+'</b><small>'+r+' away</small></div>').join('')+'</div>'+
+    '<p class="sc-note"><b>+'+BONUS+' bonus</b> for the closest guess (ties all get it). An exact hit is worth '+(TIERS[0][1]+BONUS)+'. No guess = 0. Most points after the last question wins.</p></section>';
+}
 function toast(msg,bad){ const t=document.createElement('div'); t.className='toast'+(bad?' bad':''); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
 const FACE=new Image(); FACE.src='data:image/webp;base64,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';
 function pop(big){
@@ -496,7 +518,7 @@ function landingHtml(){
   '<label for="jName">Your name</label><input id="jName" maxlength="14" autocomplete="off" value="'+esc(sstore.get('bday_name')||'')+'">'+
   '<button id="jGo" class="btn sun big">Join</button><div id="jMsg"></div></section>'+
   '<details class="card"><summary>I\'m the birthday person</summary><div class="stack"><label for="hCode">Room code</label><input id="hCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'"><label for="hPin">Host PIN</label><input id="hPin" type="tel" inputmode="numeric" maxlength="4" placeholder="4 digits" autocomplete="off"><button id="hGo" class="btn hot">Continue</button></div></details>'+
-  '<details class="card"><summary>Set up the big screen</summary><div class="stack"><label for="cName">Birthday person\'s name</label><input id="cName" maxlength="20" value="Aman" autocomplete="off"><label for="cPin">Host PIN (tell only the birthday person)</label><input id="cPin" type="tel" inputmode="numeric" maxlength="4" value="'+String(Math.floor(1000+Math.random()*9000))+'" autocomplete="off"><button id="cGo" class="btn hot">Create room on this screen</button></div></details></main>';
+  '<details class="card"><summary>Set up the big screen</summary><div class="stack"><label for="cName">Birthday person\'s name</label><input id="cName" maxlength="20" value="Aman" autocomplete="off"><label for="cPin">Host PIN (tell only the birthday person)</label><input id="cPin" type="tel" inputmode="numeric" maxlength="4" value="'+String(Math.floor(1000+Math.random()*9000))+'" autocomplete="off"><button id="cGo" class="btn hot">Create room on this screen</button></div></details>'+scoringHtml('Aman')+'</main>';
 }
 function bindLanding(){
   ['#jCode','#hCode'].forEach(s=>$(s).addEventListener('input',e=>{e.target.value=clean(e.target.value)}));
@@ -723,7 +745,7 @@ async function doReveal(manual){
       const ps=players();
       const res=ps.map(p=>{const v=answersOf(p.pid)[q.id]; const val=v==null?null:v; return {pid:p.pid,name:p.name,value:val,dist:val==null?null:Math.abs(val-actual),pts:0,best:false}});
       const ds=res.filter(x=>x.dist!=null).map(x=>x.dist), bd=ds.length?Math.min(...ds):null;
-      res.forEach(x=>{if(x.dist==null)return;x.best=x.dist===bd;x.pts=tierPts(x.dist)+(x.best?3:0)});
+      res.forEach(x=>{if(x.dist==null)return;x.best=x.dist===bd;x.pts=tierPts(x.dist)+(x.best?BONUS:0)});
       const ok=await put('reveal:'+ROOM+':'+q.id,'reveal',{qid:q.id,actual,results:res});
       if(!ok){toast('Could not save the result. Try again.',true);return}
     }
@@ -848,7 +870,7 @@ function renderPlayer(){
   }
   const me=players().find(p=>p.pid===pid)||{name:prow.data.name,score:0,pid};
   if(r.phase==='setup'){
-    mount('p-wait','<main class="wrap">'+pHead()+'<h1 class="h1">You\'re in, '+esc(me.name)+'.</h1><p class="lede" id="pwait"></p>'+
+    mount('p-wait','<main class="wrap">'+pHead()+'<h1 class="h1">You\'re in, '+esc(me.name)+'.</h1><p class="lede" id="pwait"></p>'+scoringHtml(hn)+
       '<section class="card"><h2>Suggest a question</h2><p class="lede">Something '+esc(hn)+' will have to dodge. '+esc(hn)+' decides if it goes in.</p><label for="sg-text">Statement</label><input id="sg-text" maxlength="120" placeholder="'+esc(hn)+' has stalked an ex online."><label for="sg-scale">Scale</label><select id="sg-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'<option value="custom">Custom: write both ends…</option></select><div id="sg-custom" class="stack" hidden style="margin-top:0"><input id="sg-left" maxlength="24" placeholder="Left end, e.g. Never"><input id="sg-right" maxlength="24" placeholder="Right end, e.g. Every day"></div><button id="sg-send" class="btn sun">Send to '+esc(hn)+'</button></section>'+
       '<section><h2 class="qlabel" style="margin-bottom:8px">In the room</h2><div class="chips" id="chips"></div></section></main>',
       ()=>{ $('#sg-scale').onchange=()=>{$('#sg-custom').hidden=$('#sg-scale').value!=='custom'}; $('#sg-send').onclick=async()=>{const text=($('#sg-text').value||'').trim(); if(!text)return toast('Write the statement first',true); const k=$('#sg-scale').value; let l,rr;
@@ -894,7 +916,8 @@ function renderPlayer(){
   const dv=draft[q.id]!=null?draft[q.id]:50;
   mount('p-g:'+r.qi,'<main class="wrap">'+head+'<p class="lede">Where did '+esc(hn)+' place himself? Ask him anything, then drag.</p>'+
     '<div class="card"><div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div><input id="gr" type="range" class="rng" min="0" max="100" value="'+dv+'" aria-label="Your guess"><div class="ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div><div class="bignum" id="gv">'+dv+'</div></div>'+
-    '<button id="lock" class="btn sun big">Lock it in</button><p class="warn">After you tap, you get 5 seconds to change your mind.</p></main>',
+    '<button id="lock" class="btn sun big">Lock it in</button><p class="warn">After you tap, you get 5 seconds to change your mind.</p>'+
+    '<div class="sc-mini"><div class="qlabel">Points by distance from '+esc(hn)+'\'s number</div>'+scoringHtml(hn,true)+'</div></main>',
     ()=>{ const gr=$('#gr'); gr.addEventListener('input',()=>{setText($('#gv'),gr.value);draft[q.id]=parseInt(gr.value,10)});
       $('#lock').onclick=()=>startPend(q,parseInt(gr.value,10)); });
 }
