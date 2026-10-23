@@ -36,9 +36,18 @@ button{cursor:pointer}
 .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0}
 .center{display:grid;place-items:center;min-height:60vh;color:var(--muted);text-align:center}
 .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(90deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .hl{font-style:normal;-webkit-text-fill-color:var(--gold)}
 .brand::before{content:"A";display:inline-grid;place-items:center;width:28px;height:30px;flex:none;font-size:15px;font-weight:900;background:linear-gradient(160deg,#FFE9A6,var(--gold) 45%,var(--gold2));-webkit-text-fill-color:var(--ink);clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)}
 .code{font-size:13px;color:var(--muted)} .code b{font-family:var(--display);color:var(--sun);letter-spacing:.12em;margin-left:4px}
 .phead{display:flex;justify-content:space-between;align-items:center;gap:4px 12px;flex-wrap:wrap}
+.landing{min-height:calc(100svh - 48px);justify-content:center;text-align:center;align-items:stretch}
+.landing>.brand{align-self:center}
+.landing .lede{margin-left:auto;margin-right:auto;max-width:34ch}
+.landing .card{text-align:left}
+.logo{margin:4px 0 0;display:flex;flex-direction:column;align-items:center;line-height:1;font-family:var(--display)}
+.logo .k{font-weight:700;font-size:clamp(15px,4.6vw,22px);letter-spacing:.34em;text-transform:uppercase;color:var(--muted);padding-left:.34em}
+.logo .am{font-weight:900;font-size:clamp(44px,14.5vw,76px);letter-spacing:-.01em;text-transform:uppercase;margin-top:8px;color:#fff;text-shadow:0 6px 40px rgba(86,116,255,.55)}
+.logo .am b{font-weight:900;background:linear-gradient(180deg,#FFF1BE,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(245,200,75,.45))}
 .h1.gold{background:linear-gradient(180deg,#fff,var(--sun));-webkit-background-clip:text;background-clip:text;color:transparent}
 .h1{font-family:var(--display);font-weight:900;font-size:clamp(26px,7vw,34px);line-height:1.1;text-wrap:balance}
 .lede{color:var(--muted);text-wrap:pretty}
@@ -413,13 +422,13 @@ function doneHtml(tv){
     (rest.length?'<div class="res">'+rest.map((p,i)=>'<div class="res-row" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+4)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div>':'')+
     (tv?'<div class="opbar"><a class="btn" href="'+esc(base)+'">New game</a></div>':'')+'</main>';
 }
-const pHead=()=>'<div class="phead"><span class="brand">Kaun Banega Amanaire</span><span class="code">Room<b>'+esc(ROOM)+'</b></span></div>';
-const tvHead=()=>'<header class="tvhead"><div class="brand">Kaun Banega Amanaire</div><div class="code">Room<b>'+esc(ROOM)+'</b></div></header>';
+const pHead=()=>'<div class="phead"><span class="brand">Kaun Banega <em class="hl">AMAN</em>aire</span><span class="code">Room<b>'+esc(ROOM)+'</b></span></div>';
+const tvHead=()=>'<header class="tvhead"><div class="brand">Kaun Banega <em class="hl">AMAN</em>aire</div><div class="code">Room<b>'+esc(ROOM)+'</b></div></header>';
 
 /* ---------- landing ---------- */
 function landingHtml(){
   return '<main class="wrap landing"><div class="brand">The birthday game show</div>'+
-  '<h1 class="h1 gold">Kaun Banega Amanaire</h1><p class="lede">How well do you know Aman? He secretly places himself on a scale. Everyone else argues, bluffs, and guesses.</p>'+
+  '<h1 class="logo"><span class="k">Kaun Banega</span><span class="am"><b>AMAN</b>aire</span></h1><p class="lede">How well do you know Aman? He secretly places himself on a scale. Everyone else argues, bluffs, and guesses.</p>'+
   '<section class="card"><h2>Join a game</h2><label for="jCode">Room code (shown on the big screen)</label>'+
   '<input id="jCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'">'+
   '<label for="jName">Your name</label><input id="jName" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'">'+
