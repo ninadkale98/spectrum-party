@@ -11,7 +11,7 @@
 <style>
 /* Layout concept: one dark "game show" stage. A big spectrum bar is the hero on every screen;
    pins (guesses) and one hot marker (the secret number) land on it. Phones get a single column,
-   the main screen scales up with vw units. */
+   the big screen scales up with vw units. */
 :root{
   --bg:#0B0F23; --panel:#141A3A; --panel2:#1B2350; --line:#2B3570;
   --text:#EEF1FF; --muted:#9AA5DC;
@@ -22,14 +22,14 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:max(16px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));
-  background:radial-gradient(1200px 600px at 80% -10%,#1d2766 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,#3a1240 0%,transparent 55%),var(--bg)}
+  background:radial-gradient(1200px 600px at 80% -10%,#1d2766 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,#3a1240 0%,transparent 55%),var(--bg);overflow-x:hidden}
 h1,h2,h3,p{margin:0}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 [hidden]{display:none!important}
 .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0}
-.center{display:grid;place-items:center;min-height:60vh;color:var(--muted)}
+.center{display:grid;place-items:center;min-height:60vh;color:var(--muted);text-align:center}
 .brand{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
 .code{font-size:13px;color:var(--muted)} .code b{font-family:var(--display);color:var(--sun);letter-spacing:.12em;margin-left:4px}
 .phead{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -38,19 +38,24 @@ button{cursor:pointer}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
 .card h2{font-family:var(--display);font-size:16px;font-weight:700}
 label{font-size:13px;color:var(--muted);font-weight:600}
-input[type=text],input:not([type]),select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px}
+input[type=text],input:not([type]),input[type=tel],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px}
 .btn{border:0;border-radius:14px;padding:14px 18px;background:var(--panel2);color:var(--text);font-weight:700;border:1px solid var(--line)}
 .btn.hot{background:var(--hot);border-color:var(--hot);color:#fff}
 .btn.sun{background:var(--sun);border-color:var(--sun);color:var(--ink)}
 .btn.big{padding:18px 22px;font-size:18px;font-family:var(--display);font-weight:700}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:transparent}
+.btn.sm{padding:8px 12px;border-radius:10px;font-size:14px}
+a.btn{display:block;text-align:center;text-decoration:none}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);padding:6px 12px 6px 6px;border-radius:99px;font-weight:600;font-size:14px}
 .chip i{font-style:normal;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--c,var(--cyan));color:var(--ink);font-weight:800;font-size:12px}
 .chip.done{border-color:var(--mint)} .chip.done::after{content:"✓";color:var(--mint);font-weight:800}
+.kick{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 0 0 2px}
 .qlabel{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .qt{font-family:var(--display);font-weight:700;font-size:clamp(20px,5.6vw,26px);line-height:1.25;text-wrap:balance}
+.pill{display:inline-block;align-self:flex-start;padding:6px 14px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-weight:700;font-size:14px}
+.pill.ok{border-color:var(--mint);color:var(--mint)}
 
 /* --- spectrum bar --- */
 .scale{width:100%}
@@ -78,16 +83,16 @@ input[type=text],input:not([type]),select,textarea{width:100%;background:var(--b
 .mini-ends{display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .mini-ends span:first-child{color:var(--cyan)} .mini-ends span:last-child{color:var(--hot);text-align:right}
 
-/* --- host setup --- */
+/* --- Aman's setup --- */
 .qcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px}
-.qcard.unset{opacity:.78;border-style:dashed}
+.qcard.unset{opacity:.8;border-style:dashed}
 .qtop{display:flex;gap:10px;align-items:flex-start}
 .qnum{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--panel2);font-weight:800;font-size:13px;color:var(--muted)}
 .qtop .qt2{flex:1;min-width:0;font-weight:600}
 .x{flex:none;background:none;border:0;color:var(--muted);font-size:22px;line-height:1;padding:0 4px}
-.qval{display:flex;align-items:baseline;gap:10px}
+.qval{display:flex;align-items:center;gap:10px}
 .qval b{font-family:var(--display);font-size:22px;min-width:2.2ch}
-.qval small{color:var(--muted)}
+.qval small{color:var(--muted);flex:1}
 .qcard:not(.unset) .qval b{color:var(--sun)}
 .startbar{position:sticky;bottom:max(8px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;background:linear-gradient(transparent,var(--bg) 40%);padding-top:18px}
 .startbar small{color:var(--muted);text-align:center}
@@ -96,12 +101,13 @@ details.card summary{cursor:pointer;font-family:var(--display);font-weight:700;f
 .sugg-item{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--sun);border-radius:14px;padding:10px 12px}
 .sugg-item p{flex:1;min-width:0;font-weight:600}
 .sugg-item small{display:block;color:var(--muted);font-weight:500}
-.sugg-item button{padding:8px 12px;border-radius:10px;font-size:14px}
 .mine{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px dashed var(--hot);border-radius:16px;padding:14px 16px}
-.mine b{font-family:var(--display);font-size:34px;color:var(--hot)}
 .warn{font-size:13px;color:var(--muted);text-align:center}
 .btnrow{display:flex;gap:10px;flex-wrap:wrap} .btnrow .btn{flex:1}
-.toast{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);text-align:center;background:var(--mint);color:var(--ink);font-weight:700;padding:10px 16px;border-radius:99px;z-index:50}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.toast{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);text-align:center;background:var(--mint);color:var(--ink);font-weight:700;padding:10px 16px;border-radius:99px;z-index:70}
+.toast.bad{background:var(--hot);color:#fff}
+.net{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--hot);color:#fff;text-align:center;font-weight:700;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 
 /* --- results --- */
 .res{display:flex;flex-direction:column;gap:6px}
@@ -112,31 +118,38 @@ details.card summary{cursor:pointer;font-family:var(--display);font-weight:700;f
 .res-row .g{color:var(--muted);font-variant-numeric:tabular-nums}
 .res-row .pts{font-family:var(--display);font-weight:700;color:var(--mint);min-width:3.5ch;text-align:right}
 .res-row .tot{font-family:var(--display);font-weight:700;font-variant-numeric:tabular-nums}
-.landing .card{gap:10px}
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;height:min(46vh,360px);margin-top:8px}
-.podium .step{flex:1;max-width:220px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;text-align:center}
+.podium .step{flex:1;max-width:220px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;text-align:center;min-width:0}
 .podium .bar{width:100%;border-radius:16px 16px 0 0;background:linear-gradient(var(--c),color-mix(in srgb,var(--c) 40%,var(--bg)));display:grid;place-items:start center;padding-top:12px;font-family:var(--display);font-weight:900;font-size:clamp(28px,5vw,56px);color:var(--ink)}
 .podium .pname{font-family:var(--display);font-weight:700;font-size:clamp(14px,2.2vw,26px);overflow-wrap:anywhere}
 .podium .psc{color:var(--muted);font-weight:700}
 
-/* --- main screen (TV) --- */
+/* --- big screen (TV) --- */
 body.tv .wrap{max-width:1500px;gap:clamp(12px,2vw,28px)}
 .tvhead{display:flex;justify-content:space-between;align-items:center}
 .tvhead .brand{font-size:clamp(14px,1.6vw,22px)} .tvhead .code{font-size:clamp(14px,1.6vw,22px)}
-.qrs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:clamp(14px,2.4vw,36px);align-items:start}
-.qr-card{border-radius:28px;padding:clamp(16px,2vw,28px);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;border:2px solid var(--c)}
-.qr-card.hot{--c:var(--hot)} .qr-card.sun{--c:var(--sun)}
-.qr-card h3{font-family:var(--display);font-size:clamp(20px,2.6vw,38px);color:var(--c)}
-.qr-card p{color:var(--muted);font-size:clamp(14px,1.5vw,22px)}
-.qrbox{background:#fff;border-radius:18px;padding:14px;width:min(100%,clamp(200px,24vw,360px));aspect-ratio:1}
-.qrbox svg{display:block;width:100%;height:100%}
-.qrbox .fallback{color:#000;font-size:12px;word-break:break-all}
+.tvsetup{display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(16px,2.6vw,40px);align-items:stretch}
+@media (max-width:900px){.tvsetup{grid-template-columns:1fr}}
+.joinhero{display:flex;flex-direction:column;gap:clamp(8px,1.4vw,18px);justify-content:center}
+.joinhero .qlabel{font-size:clamp(12px,1.4vw,20px)}
+.url{font-family:var(--display);font-weight:700;font-size:clamp(16px,2.8vw,44px);color:var(--sun);overflow-wrap:anywhere;line-height:1.2}
+.tiles{display:flex;gap:clamp(8px,1.4vw,20px)}
+.tiles span{flex:1;max-width:clamp(60px,12vw,190px);aspect-ratio:1;display:grid;place-items:center;background:var(--panel2);border:2px solid var(--hot);border-radius:clamp(12px,2vw,28px);font-family:var(--display);font-weight:900;font-size:clamp(36px,8vw,128px);color:#fff}
+.side .cnt{font-family:var(--display);font-weight:700;font-size:clamp(16px,2vw,28px);color:var(--sun)}
+.side{gap:clamp(10px,1.4vw,18px)}
+.side .chips{min-height:48px}
+.side small{color:var(--muted)}
 .tvq{font-family:var(--display);font-weight:900;font-size:clamp(26px,5vw,68px);line-height:1.12;text-wrap:balance}
+body.tv .h1{font-size:clamp(32px,4.2vw,72px)}
+body.tv .podium{height:min(52vh,560px)}
+body.tv .compact .tvq{font-size:clamp(22px,3.6vw,48px)}
+body.tv .compact .track-outer{padding:64px 22px 110px}
 .statusrow{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .statusrow .cnt{font-family:var(--display);font-weight:700;font-size:clamp(16px,2vw,28px);color:var(--sun)}
 .tvgrid{display:grid;grid-template-columns:1.5fr 1fr;gap:clamp(14px,2.4vw,36px);align-items:start}
 @media (max-width:900px){.tvgrid{grid-template-columns:1fr}}
-.status{color:var(--muted);font-size:clamp(16px,2vw,26px);text-align:center}
+.opbar{display:flex;justify-content:flex-end;align-items:center;gap:14px}
+.opbar small{color:var(--muted)}
 .lockover{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;background:rgba(11,15,35,.82);z-index:40;backdrop-filter:blur(4px)}
 .lockover span{font-family:var(--display);font-weight:900;font-size:min(36vw,300px);line-height:1;color:var(--sun)}
 .lockover small{color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:clamp(14px,2vw,24px)}
@@ -148,18 +161,15 @@ body.tv .wrap{max-width:1500px;gap:clamp(12px,2vw,28px)}
 </head>
 <body>
 <div id="app" class="center">Loading…</div>
+<div id="net" class="net" hidden>Connection lost. Trying to reconnect…</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script>
 (function(){
 'use strict';
 
 /* ---------- config ---------- */
-const SB_URL='https://qrfgbkgbwtojxcylmhtl.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZmdia2did3RvanhjeWxtaHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NDkxNzYsImV4cCI6MjEwNzMyNTE3Nn0.e6evfxr3OKgANtbEbfAvO38nWCyeZHwxl9GDo-Sholc';
-const TABLE='bday_game';
+const SB='https://qrfgbkgbwtojxcylmhtl.supabase.co/rest/v1/bday_game';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZmdia2did3RvanhjeWxtaHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NDkxNzYsImV4cCI6MjEwNzMyNTE3Nn0.e6evfxr3OKgANtbEbfAvO38nWCyeZHwxl9GDo-Sholc';
 const SCALES={
   never:['Would Never Do','Would Definitely Do'],
   hates:['Hates It','Loves It'],
@@ -169,7 +179,7 @@ const SCALES={
 };
 const SCALE_NAMES={never:'Would Never Do ↔ Would Definitely Do',hates:'Hates It ↔ Loves It',idea:'Terrible Idea ↔ Great Idea',freq:'Never ↔ Always',me:'Not Me ↔ Literally Me'};
 const DEFAULTS=[
-  ['How many days a week does {n} eat paratha?','0 days','7 days'],
+  ['How many days a week does {n} eat paratha?','Never','Every day'],
   ['{n} skips cooking and orders food.',...SCALES.freq],
   ['{n} calls Maggi a proper meal.',...SCALES.freq],
   ['{n} says "just one chai" and has three.',...SCALES.freq],
@@ -193,70 +203,115 @@ const DEFAULTS=[
 const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432'];
 const LOCK_MS=5000, CAP_MS=60000;
 
-/* ---------- small helpers ---------- */
+/* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const rid=n=>{const a='abcdefghijklmnopqrstuvwxyz0123456789';let s='';for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clean=s=>String(s||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
 const colorFor=pid=>{let h=0;for(const c of String(pid))h=(h*31+c.charCodeAt(0))>>>0;return PALETTE[h%PALETTE.length]};
 const initial=n=>(String(n||'?').trim()[0]||'?').toUpperCase();
 const tierPts=d=>d<=3?10:d<=8?7:d<=15?5:d<=25?3:d<=40?1:0;
-function pop(big){ if(!window.confetti)return; try{confetti({particleCount:big?180:100,spread:big?100:70,origin:{y:.35},colors:['#FF4F6D','#FFD23F','#46C8FF','#3DDC97','#ffffff'],disableForReducedMotion:true});}catch(e){} }
-function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+function toast(msg,bad){ const t=document.createElement('div'); t.className='toast'+(bad?' bad':''); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
+function pop(big){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const c=document.createElement('canvas'); c.width=innerWidth; c.height=innerHeight;
+  c.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60'; document.body.appendChild(c);
+  const x=c.getContext('2d'), cols=['#FF4F6D','#FFD23F','#46C8FF','#3DDC97','#ffffff'], ps=[], n=big?170:90;
+  for(let i=0;i<n;i++)ps.push({x:c.width/2,y:c.height*.35,vx:(Math.random()-.5)*(big?24:16),vy:-Math.random()*(big?18:13)-4,r:4+Math.random()*5,c:cols[i%5],rot:Math.random()*6,vr:(Math.random()-.5)*.4});
+  let t=0;(function f(){x.clearRect(0,0,c.width,c.height);ps.forEach(p=>{p.vy+=.45;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.rot+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.fillStyle=p.c;x.fillRect(-p.r,-p.r/2,p.r*2,p.r);x.restore()});if(++t<150)requestAnimationFrame(f);else c.remove()})();
+}
+
+/* ---------- backend (plain REST, no library) ---------- */
+async function api(method,qs,body,extra){
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),9000);
+  try{
+    const res=await fetch(SB+qs,{method,signal:ctl.signal,cache:'no-store',
+      headers:Object.assign({apikey:KEY,Authorization:'Bearer '+KEY},body?{'Content-Type':'application/json'}:{},extra||{}),
+      body:body?JSON.stringify(body):undefined});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    return method==='GET'?await res.json():null;
+  } finally{clearTimeout(to)}
+}
 
 /* ---------- state ---------- */
 const qs=new URLSearchParams(location.search);
-let ROOM=(qs.get('r')||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
-let VIEW=qs.get('v')||(ROOM?'play':'');
+const PREFILL=clean(qs.get('r'));
+let VIEW=['tv','host','play'].includes(qs.get('v'))?qs.get('v'):'';
+let ROOM=VIEW?PREFILL:'';
 const base=location.origin+location.pathname;
+const shortUrl=location.host+location.pathname.replace(/index\.html$/,'');
 const app=$('#app');
-const cache=new Map();
-let loaded=false, curSig='', sb=null, hq=[], rafQueued=false;
-const lockSeen={};
+let cache=new Map(), pending=new Map(), loaded=false, curSig='', pollP=null, fails=0, rq=false, looping=false;
 
-const roomRow=()=>cache.get('room:'+ROOM);
-const R=()=>{const r=roomRow();return r&&r.data};
+const R=()=>{const r=cache.get('room:'+ROOM);return r&&r.data};
+const hostRow=()=>{const r=cache.get('host:'+ROOM);return r&&r.data};
+const keyRow=()=>{const r=cache.get('key:'+ROOM);return r&&r.data};
 const rows=kind=>[...cache.values()].filter(r=>r.kind===kind);
-const players=()=>rows('player').map(r=>({pid:r.id.split(':')[2],name:r.data.name,score:r.data.score||0})).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
-const guessesFor=qid=>rows('guess').filter(r=>r.data.qid===qid);
 const revealFor=qid=>{const r=cache.get('reveal:'+ROOM+':'+qid);return r&&r.data};
-const myHost=()=>{let h=store.get('bday_host_'+ROOM);if(!h){h='h'+rid(10);store.set('bday_host_'+ROOM,h)}return h};
+const answersOf=pid=>{const r=cache.get('ans:'+ROOM+':'+pid);return (r&&r.data.answers)||{}};
+function players(){
+  const gone=new Set(rows('gone').map(r=>r.id.split(':')[2])), tot={};
+  rows('reveal').forEach(r=>(r.data.results||[]).forEach(x=>{tot[x.pid]=(tot[x.pid]||0)+(x.pts||0)}));
+  return rows('player').map(r=>({pid:r.id.split(':')[2],name:r.data.name||'?',score:tot[r.id.split(':')[2]]||0}))
+    .filter(p=>!gone.has(p.pid)).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
+}
+const answered=(ps,qid)=>ps.filter(p=>answersOf(p.pid)[qid]!=null);
 
-async function loadRoom(){
-  if(!sb||!ROOM)return;
-  const {data,error}=await sb.from(TABLE).select('*').eq('room',ROOM).limit(1000);
-  if(error||!data)return;
-  const ids=new Set(data.map(r=>r.id));
-  data.forEach(r=>cache.set(r.id,r));
-  for(const k of [...cache.keys()]) if(!ids.has(k)) cache.delete(k);
+function merge(data){
+  const m=new Map(); data.forEach(r=>m.set(r.id,r));
+  const now=Date.now();
+  pending.forEach((p,id)=>{
+    const s=m.get(id);
+    if(now-p.t>15000||(s&&Date.parse(s.updated_at)>=Date.parse(p.row.updated_at)))pending.delete(id); else m.set(id,p.row);
+  });
+  cache=m;
 }
+function showNet(on){ $('#net').hidden=!on; }
+function poll(){
+  if(!ROOM)return Promise.resolve();
+  if(pollP)return pollP;
+  const f=(VIEW==='tv'||VIEW==='host')?'in.('+ROOM+','+ROOM+'S)':'eq.'+ROOM;
+  pollP=api('GET','?select=id,room,kind,data,updated_at&room='+f)
+    .then(d=>{merge(d);fails=0;loaded=true;showNet(false)})
+    .catch(()=>{fails++;if(fails>=3)showNet(true)})
+    .finally(()=>{pollP=null;queueRender()});
+  return pollP;
+}
+async function refreshNow(){ if(pollP)await pollP; return poll(); }
 async function put(id,kind,data,room){
-  const rm=room||ROOM;
-  const row={id,room:rm,kind,data,updated_at:new Date().toISOString()};
-  cache.set(id,row); queueRender();
-  const {error}=await sb.from(TABLE).upsert(row);
-  if(error){console.error(error);toast('Connection hiccup. Retrying…');setTimeout(()=>sb.from(TABLE).upsert(row),1500);}
+  const row={id,room:room||ROOM,kind,data,updated_at:new Date().toISOString()};
+  pending.set(id,{row,t:Date.now()}); cache.set(id,row); queueRender();
+  for(let i=0;i<4;i++){
+    try{ await api('POST','?on_conflict=id',[row],{Prefer:'resolution=merge-duplicates,return=minimal'}); return true; }
+    catch(e){ await sleep(400*(i+1)); }
+  }
+  pending.delete(id); return false;
 }
-function subscribe(){
-  sb.channel('room-'+ROOM).on('postgres_changes',{event:'*',schema:'public',table:TABLE,filter:'room=eq.'+ROOM},p=>{
-    if(p.eventType==='DELETE'){ if(p.old&&p.old.id)cache.delete(p.old.id); } else if(p.new){ cache.set(p.new.id,p.new); }
-    queueRender();
-  }).subscribe();
-  setInterval(async()=>{await loadRoom();queueRender()},2500);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadRoom().then(queueRender)}});
+function queueRender(){ if(rq)return; rq=true; requestAnimationFrame(()=>{rq=false;render()}); }
+function mount(sig,html,bind,keep){
+  if(sig===curSig)return false;
+  const y=keep&&curSig.split(':')[0]===sig.split(':')[0]?window.scrollY:0;
+  curSig=sig; app.className=''; app.innerHTML=html; if(bind)bind(); window.scrollTo(0,y); return true;
 }
-function queueRender(){ if(rafQueued)return; rafQueued=true; requestAnimationFrame(()=>{rafQueued=false;render()}); }
-function mount(sig,html,bind){ if(sig===curSig)return false; curSig=sig; app.className=''; app.innerHTML=html; if(bind)bind(); window.scrollTo(0,0); return true; }
 function setHtml(el,html){ if(el&&el._h!==html){el._h=html;el.innerHTML=html} }
+function setText(el,t){ if(el&&el.textContent!==t)el.textContent=t; }
+
+function enterRoom(view){
+  VIEW=view; document.body.classList.toggle('tv',view==='tv');
+  try{history.replaceState(null,'','?r='+ROOM+'&v='+view)}catch(e){}
+  cache=new Map(); loaded=false; curSig=''; fails=0;
+  if(view==='tv'&&navigator.wakeLock){navigator.wakeLock.request('screen').catch(()=>{})}
+  if(!looping){looping=true;setInterval(poll,1000);setInterval(tick,500)}
+  render(); poll();
+}
 
 /* ---------- shared widgets ---------- */
-function qrSvg(text){
-  try{ const q=qrcode(0,'M'); q.addData(text); q.make(); return q.createSvgTag({cellSize:4,margin:0,scalable:true}); }
-  catch(e){ return '<div class="fallback">'+esc(text)+'</div>'; }
-}
-function chipsHtml(done){
-  const ps=players(); if(!ps.length) return '<span class="code">Nobody yet. Scan the code to join.</span>';
-  return ps.map(p=>'<span class="chip'+(done&&done.has(p.pid)?' done':'')+'" style="--c:'+colorFor(p.pid)+'"><i>'+esc(initial(p.name))+'</i>'+esc(p.name)+'</span>').join('');
+function chipsHtml(done,kick){
+  const ps=players(); if(!ps.length)return '<span class="code">Nobody yet.</span>';
+  return ps.map(p=>'<span class="chip'+(done&&done.has(p.pid)?' done':'')+'" style="--c:'+colorFor(p.pid)+'"><i>'+esc(initial(p.name))+'</i>'+esc(p.name)+
+    (kick?'<button class="kick" data-kick="'+esc(p.pid)+'" aria-label="Remove '+esc(p.name)+'">×</button>':'')+'</span>').join('');
 }
 function scaleBar(q,pins,actual){
   const sorted=[...pins].sort((a,b)=>a.v-b.v);
@@ -266,236 +321,309 @@ function scaleBar(q,pins,actual){
 }
 function animatePins(){ setTimeout(()=>app.querySelectorAll('.pin').forEach(p=>p.classList.add('in')),80); }
 function leaderboardHtml(rev){
-  const ps=players();
-  const byPid={}; if(rev) rev.results.forEach(x=>byPid[x.pid]=x);
-  return '<div class="res">'+ps.map(p=>{const x=byPid[p.pid]; return '<div class="res-row'+(x&&x.best?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+esc(p.name)+'</span><span class="pts">'+(x?'+'+x.pts:'')+'</span><span class="tot">'+p.score+'</span></div>'}).join('')+'</div>';
+  const byPid={}; if(rev)rev.results.forEach(x=>byPid[x.pid]=x);
+  return '<div class="res">'+players().map(p=>{const x=byPid[p.pid];return '<div class="res-row'+(x&&x.best?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+esc(p.name)+'</span><span class="pts">'+(x?'+'+x.pts:'')+'</span><span class="tot">'+p.score+'</span></div>'}).join('')+'</div>';
 }
 function resultsHtml(rev){
   const rs=[...rev.results].sort((a,b)=>b.pts-a.pts||(a.dist==null)-(b.dist==null));
   return '<div class="res">'+rs.map(x=>'<div class="res-row'+(x.best?' best':'')+'" style="--c:'+colorFor(x.pid)+'"><span class="dot"></span><span class="nm">'+esc(x.name)+'</span><span class="g">'+(x.value==null?'no guess':x.value)+'</span><span class="pts">+'+x.pts+'</span></div>').join('')+'</div>';
 }
-function pinsFrom(rev){ return rev.results.filter(x=>x.value!=null).map(x=>({v:x.value,t:initial(x.name),c:colorFor(x.pid),best:x.best})); }
+const pinsFrom=rev=>rev.results.filter(x=>x.value!=null).map(x=>({v:x.value,t:initial(x.name),c:colorFor(x.pid),best:x.best}));
+function doneHtml(tv){
+  const ps=players(), top=[ps[1],ps[0],ps[2]], h=[62,100,46], rank=['2','1','3'];
+  const pod=top.map((p,i)=>p?'<div class="step"><div class="pname">'+esc(p.name)+'</div><div class="psc">'+p.score+' pts</div><div class="bar" style="--c:'+colorFor(p.pid)+';height:'+h[i]+'%">'+rank[i]+'</div></div>':'<div class="step"></div>').join('');
+  const rest=ps.slice(3);
+  return '<main class="wrap">'+(tv?tvHead():pHead())+'<h1 class="h1" style="text-align:center">'+(ps[0]?esc(ps[0].name)+' wins!':'Game over')+'</h1><div class="podium">'+pod+'</div>'+
+    (rest.length?'<div class="res">'+rest.map((p,i)=>'<div class="res-row" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+4)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div>':'')+
+    (tv?'<div class="opbar"><a class="btn" href="'+esc(base)+'">New game</a></div>':'')+'</main>';
+}
+const pHead=()=>'<div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+esc(ROOM)+'</b></span></div>';
+const tvHead=()=>'<header class="tvhead"><div class="brand">Spectrum Party</div><div class="code">Room<b>'+esc(ROOM)+'</b></div></header>';
 
-/* ---------- landing / create ---------- */
+/* ---------- landing ---------- */
 function landingHtml(){
   return '<main class="wrap landing"><div class="brand">Spectrum Party</div>'+
   '<h1 class="h1">Guess where they landed.</h1><p class="lede">One person secretly places themselves on a scale. Everyone else argues, bluffs, and guesses.</p>'+
-  '<section class="card"><h2>Start a game</h2><label for="hostName">Birthday person</label><input id="hostName" value="Aman" maxlength="20" autocomplete="off"><button id="create" class="btn hot big">Create room on this screen</button></section>'+
-  '<section class="card"><h2>Join a game</h2><label for="joinCode">Room code</label><input id="joinCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off"><button id="join" class="btn sun">Join as a player</button><button id="joinHost" class="btn ghost">I am the birthday person</button></section></main>';
+  '<section class="card"><h2>Join a game</h2><label for="jCode">Room code (shown on the big screen)</label>'+
+  '<input id="jCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'">'+
+  '<label for="jName">Your name</label><input id="jName" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'">'+
+  '<button id="jGo" class="btn sun big">Join</button><div id="jMsg"></div></section>'+
+  '<details class="card"><summary>I\'m the birthday person</summary><div class="stack"><label for="hCode">Room code</label><input id="hCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'"><label for="hPin">Host PIN</label><input id="hPin" type="tel" inputmode="numeric" maxlength="4" placeholder="4 digits" autocomplete="off"><button id="hGo" class="btn hot">Continue</button></div></details>'+
+  '<details class="card"><summary>Set up the big screen</summary><div class="stack"><label for="cName">Birthday person\'s name</label><input id="cName" maxlength="20" value="Aman" autocomplete="off"><label for="cPin">Host PIN (tell only the birthday person)</label><input id="cPin" type="tel" inputmode="numeric" maxlength="4" value="'+String(Math.floor(1000+Math.random()*9000))+'" autocomplete="off"><button id="cGo" class="btn hot">Create room on this screen</button></div></details></main>';
 }
 function bindLanding(){
-  $('#create').onclick=async()=>{
-    const btn=$('#create'); btn.disabled=true; btn.textContent='Creating…';
-    const name=($('#hostName').value||'Aman').trim()||'Aman';
-    const L='ABCDEFGHJKLMNPQRSTUVWXYZ';
-    let code='';
-    for(let t=0;t<8;t++){ code=''; for(let i=0;i<4;i++)code+=L[Math.floor(Math.random()*L.length)];
-      const {data}=await sb.from(TABLE).select('id').eq('id','room:'+code).limit(1); if(!data||!data.length)break; }
-    ROOM=code; VIEW='tv';
-    await put('room:'+code,'room',{phase:'setup',hostName:name,hostId:'',questions:[],qi:0,rphase:'guess',createdAt:Date.now()},code);
-    history.replaceState(null,'','?r='+code+'&v=tv');
-    startRoom();
-  };
-  const go=v=>{const c=($('#joinCode').value||'').toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){toast('Enter the 4-letter code');return}location.href=base+'?r='+c+'&v='+v;};
-  $('#join').onclick=()=>go('play'); $('#joinHost').onclick=()=>go('host');
+  ['#jCode','#hCode'].forEach(s=>$(s).addEventListener('input',e=>{e.target.value=clean(e.target.value)}));
+  ['#hPin','#cPin'].forEach(s=>$(s).addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,4)}));
+  const enter=(sel,btn)=>$(sel).addEventListener('keydown',e=>{if(e.key==='Enter')$(btn).click()});
+  enter('#jCode','#jGo');enter('#jName','#jGo');enter('#hCode','#hGo');enter('#hPin','#hGo');enter('#cName','#cGo');enter('#cPin','#cGo');
+  $('#jGo').onclick=landingJoin; $('#hGo').onclick=landingHost; $('#cGo').onclick=landingCreate;
+}
+async function joinAs(code,name,pid){
+  const id=pid||('p'+rid(7));
+  const ok=await put('player:'+code+':'+id,'player',{name},code);
+  if(!ok){toast('Could not join. Check your internet and try again.',true);return false}
+  store.set('bday_pid_'+code,id); store.set('bday_name',name); ROOM=code; enterRoom('play'); return true;
+}
+async function landingJoin(){
+  const code=$('#jCode').value.trim(), name=$('#jName').value.trim();
+  if(code.length!==4)return toast('Enter the 4-letter room code',true);
+  if(!name)return toast('Type your name',true);
+  const btn=$('#jGo'); btn.disabled=true;
+  try{
+    const rs=await api('GET','?select=id,kind,data&room=eq.'+code+'&kind=in.(room,player)');
+    if(!rs.some(r=>r.id==='room:'+code)){toast('No room with that code. Check the big screen.',true);return}
+    const pl=rs.filter(r=>r.kind==='player'), mine=store.get('bday_pid_'+code);
+    if(mine&&pl.some(r=>r.id==='player:'+code+':'+mine)){ store.set('bday_name',name); ROOM=code; enterRoom('play'); return }
+    const dup=pl.find(r=>(r.data.name||'').trim().toLowerCase()===name.toLowerCase());
+    if(dup){
+      $('#jMsg').innerHTML='<p class="warn" style="margin:10px 0">Someone named '+esc(dup.data.name)+' is already in this room.</p><div class="btnrow"><button id="jMe" class="btn">That\'s me</button><button id="jOther" class="btn sun">Someone else</button></div>';
+      $('#jMe').onclick=()=>joinAs(code,dup.data.name,dup.id.split(':')[2]);
+      $('#jOther').onclick=()=>{$('#jMsg').innerHTML='';$('#jName').focus();toast('Add an initial, like "'+name+' B"')};
+      return;
+    }
+    await joinAs(code,name);
+  }catch(e){ toast('Could not connect. Check your internet and try again.',true); }
+  finally{ btn.disabled=false; }
+}
+async function landingHost(){
+  const code=$('#hCode').value.trim(), pin=$('#hPin').value.trim();
+  if(code.length!==4)return toast('Enter the 4-letter room code',true);
+  if(pin.length!==4)return toast('Enter the 4-digit host PIN',true);
+  const btn=$('#hGo'); btn.disabled=true;
+  try{
+    const rs=await api('GET','?select=id,data&room=eq.'+code+'S&id=eq.pin:'+code);
+    if(!rs.length)return toast('No room with that code. Check the big screen.',true);
+    if(String(rs[0].data.pin)!==pin)return toast('Wrong host PIN',true);
+    store.set('bday_ok_'+code,'1'); ROOM=code; enterRoom('host');
+  }catch(e){ toast('Could not connect. Check your internet and try again.',true); }
+  finally{ btn.disabled=false; }
+}
+async function landingCreate(){
+  const name=($('#cName').value||'').trim()||'Aman', pin=$('#cPin').value.trim();
+  if(!/^\d{4}$/.test(pin))return toast('The host PIN needs 4 digits',true);
+  const btn=$('#cGo'); btn.disabled=true; btn.textContent='Creating…';
+  try{
+    const L='ABCDEFGHJKLMNPQRSTUVWXYZ'; let code='';
+    for(let t=0;t<10;t++){ code=''; for(let i=0;i<4;i++)code+=L[Math.floor(Math.random()*L.length)];
+      const rs=await api('GET','?select=id&id=eq.room:'+code); if(!rs.length)break; }
+    const ok1=await put('room:'+code,'room',{phase:'setup',hostName:name,qi:0,rphase:'guess',lockAt:null,questions:[],createdAt:Date.now()},code);
+    const ok2=await put('pin:'+code,'pin',{pin},code+'S');
+    if(!ok1||!ok2)throw new Error('write');
+    ROOM=code; enterRoom('tv');
+  }catch(e){ toast('Could not create the room. Check your internet and try again.',true); btn.disabled=false; btn.textContent='Create room on this screen'; }
 }
 
-/* ---------- main screen (TV) ---------- */
-function tvHead(){ return '<header class="tvhead"><div class="brand">Spectrum Party</div><div class="code">Room<b>'+ROOM+'</b></div></header>'; }
+/* ---------- big screen (TV) ---------- */
+let startBusy=false;
+async function startGame(){
+  if(startBusy)return; startBusy=true;
+  try{
+    const h=hostRow(); const list=((h&&h.questions)||[]).filter(q=>q.secret!=null);
+    if(!list.length)return;
+    const secrets={}; list.forEach(q=>secrets[q.id]=q.secret);
+    const k=await put('key:'+ROOM,'key',{secrets},ROOM+'S');
+    const r=await put('room:'+ROOM,'room',{...R(),phase:'playing',questions:list.map(({id,text,left,right})=>({id,text,left,right})),qi:0,rphase:'guess',lockAt:null});
+    if(!k||!r)toast('Could not start. Try again.',true);
+  } finally{ startBusy=false; }
+}
 function renderTV(){
-  document.body.classList.add('tv');
   const r=R(), hn=r.hostName||'Aman';
-  if(r.phase==='setup'){
-    const first=mount('tv-setup','<main class="wrap">'+tvHead()+
-      '<section class="qrs"><div class="qr-card hot"><div class="qrbox" id="qr-host"></div><h3>'+esc(hn)+'</h3><p>Scan to set the secret numbers</p></div>'+
-      '<div class="qr-card sun"><div class="qrbox" id="qr-play"></div><h3>Everyone else</h3><p>Scan to join and guess</p></div></section>'+
-      '<section><div class="statusrow"><div class="cnt" id="pcount"></div></div><div class="chips" id="chips" style="margin-top:12px"></div></section>'+
-      '<p class="status" id="status"></p></main>',
-      ()=>{ $('#qr-host').innerHTML=qrSvg(base+'?r='+ROOM+'&v=host'); $('#qr-play').innerHTML=qrSvg(base+'?r='+ROOM+'&v=play'); });
-    const ps=players();
-    $('#pcount').textContent=ps.length+(ps.length===1?' player':' players')+' in the room';
-    setHtml($('#chips'),chipsHtml());
-    $('#status').textContent=r.hostId?hn+' is setting the secret numbers. Hang tight.':'Waiting for '+hn+' to scan the pink code.';
-    return;
-  }
-  if(r.phase==='done'){ mount('tv-done',doneHtml(true),()=>{pop(true);setTimeout(()=>pop(true),700)}); return; }
-  const q=r.questions[r.qi]; if(!q)return;
-  const rev=revealFor(q.id);
-  const head='<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div>';
-  if(r.rphase==='reveal'&&rev){
+  if(r.phase==='setup')return tvSetup(r,hn);
+  if(r.phase==='done'){ mount('tv-done',doneHtml(true),()=>{pop(true);setTimeout(()=>pop(true),800)}); return; }
+  const q=(r.questions||[])[r.qi]; if(!q)return;
+  const rev=revealFor(q.id), head='<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div>';
+  if(r.rphase==='reveal'){
+    if(!rev){ mount('tv-scoring','<div class="center"><h1 class="tvq">Scoring…</h1></div>'); return; }
     const best=rev.results.some(x=>x.best);
-    mount('tv-r-'+r.qi,'<main class="wrap">'+tvHead()+head+'<h1 class="tvq">'+esc(q.text)+'</h1>'+scaleBar(q,pinsFrom(rev),rev.actual)+
-      '<div class="tvgrid"><section><h2 class="qlabel" style="margin-bottom:8px">This round</h2>'+resultsHtml(rev)+'</section><section><h2 class="qlabel" style="margin-bottom:8px">Scoreboard</h2>'+leaderboardHtml(rev)+'</section></div></main>',
-      ()=>{animatePins(); if(best)setTimeout(()=>pop(false),1700);});
+    const last=r.qi+1>=r.questions.length;
+    mount('tv-r-'+r.qi,'<main class="wrap compact">'+tvHead()+head+'<h1 class="tvq">'+esc(q.text)+'</h1>'+scaleBar(q,pinsFrom(rev),rev.actual)+
+      '<div class="tvgrid"><section><h2 class="qlabel" style="margin-bottom:8px">This round</h2>'+resultsHtml(rev)+'</section><section><h2 class="qlabel" style="margin-bottom:8px">Scoreboard</h2><div id="board"></div></section></div>'+
+      '<div class="opbar"><small>Press Space</small><button id="tvAct" class="btn hot big">'+(last?'Show final results':'Next question')+'</button></div></main>',
+      ()=>{animatePins(); if(best)setTimeout(()=>pop(false),1700); $('#tvAct').onclick=nextQuestion;});
+    setHtml($('#board'),leaderboardHtml(rev));
     return;
   }
   mount('tv-g-'+r.qi,'<main class="wrap">'+tvHead()+head+'<h1 class="tvq">'+esc(q.text)+'</h1>'+scaleBar(q,[],null)+
-    '<div class="statusrow"><div class="cnt" id="lockcount"></div></div><div class="chips" id="chips"></div></main><div class="lockover" id="lockover" hidden><span id="count">5</span><small>Locking guesses</small></div>');
-  const gs=guessesFor(q.id), done=new Set(gs.map(g=>g.data.pid)), ps=players();
-  $('#lockcount').textContent=done.size+' of '+ps.length+' locked in';
+    '<div class="statusrow"><div class="cnt" id="lockcount"></div></div><div class="chips" id="chips"></div>'+
+    '<div class="opbar"><small>Reveals automatically 5 seconds after everyone locks in</small><button id="tvAct" class="btn">Reveal now</button></div></main>'+
+    '<div class="lockover" id="lockover" hidden><span id="count">5</span><small>Locking guesses</small></div>',
+    ()=>{$('#tvAct').onclick=()=>doReveal(true);});
+  const ps=players(), done=new Set(answered(ps,q.id).map(p=>p.pid));
+  setText($('#lockcount'),done.size+' of '+ps.length+' locked in');
   setHtml($('#chips'),chipsHtml(done));
-  syncLockOverlay(r);
+  syncLock(r);
 }
-function syncLockOverlay(r){
+function tvSetup(r,hn){
+  mount('tv-setup','<main class="wrap">'+tvHead()+
+    '<section class="tvsetup"><div class="joinhero"><div class="qlabel">1 · On your phone, open</div><div class="url">'+esc(shortUrl)+'</div>'+
+    '<div class="qlabel">2 · Tap “Join a game” and enter this code</div><div class="tiles">'+ROOM.split('').map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>'+
+    '<p class="lede">'+esc(hn)+': tap “I\'m the birthday person” and enter the room code and host PIN.</p></div>'+
+    '<div class="card side"><div class="cnt" id="pcount"></div><div class="chips" id="chips"></div><span class="pill" id="hpill"></span>'+
+    '<button id="tvAct" class="btn hot big" disabled>Start game</button><small id="startNote"></small>'+
+    '<div class="btnrow"><button id="copyInv" class="btn">Copy invite link</button><button id="pinBtn" class="btn ghost">Show host PIN</button></div></div></section></main>',
+    ()=>{
+      $('#tvAct').onclick=startGame;
+      $('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-kick]'); if(b)put('gone:'+ROOM+':'+b.dataset.kick,'gone',{at:Date.now()});});
+      $('#copyInv').onclick=async()=>{const link=base+'?r='+ROOM; try{await navigator.clipboard.writeText(link);toast('Invite link copied')}catch(e){toast(link)}};
+      $('#pinBtn').onclick=()=>{const p=cache.get('pin:'+ROOM); const b=$('#pinBtn'); if(b.dataset.on){b.dataset.on='';b.textContent='Show host PIN'}else{b.dataset.on='1';b.textContent='Host PIN: '+(p?p.data.pin:'?')}};
+    });
+  const ps=players(), h=hostRow(), qn=(h&&h.questions)||[], set=qn.filter(q=>q.secret!=null).length, ready=!!(h&&h.ready)&&set>0;
+  setText($('#pcount'),ps.length+(ps.length===1?' player':' players')+' in the room');
+  setHtml($('#chips'),chipsHtml(null,true));
+  const pill=$('#hpill'); pill.className='pill'+(ready?' ok':'');
+  setText(pill,!h?'Waiting for '+hn+' to join':ready?hn+' is ready ✓ ('+set+' question'+(set===1?'':'s')+')':hn+' is setting numbers ('+set+' of '+qn.length+')');
+  const b=$('#tvAct'); b.disabled=!(ready&&ps.length>0);
+  setText($('#startNote'),!ready?'Waiting for '+hn+' to say he\'s ready.':ps.length===0?'Waiting for at least one player to join.':'Everyone in? Press Space or tap Start.');
+}
+function syncLock(r){
   const el=$('#lockover'); if(!el)return;
-  if(r.rphase==='locking'){ if(!lockSeen[r.qi])lockSeen[r.qi]=Date.now(); el.hidden=false; const left=Math.max(1,Math.ceil((lockSeen[r.qi]+LOCK_MS-Date.now())/1000)); $('#count').textContent=left; }
+  if(r.rphase==='locking'&&r.lockAt){ el.hidden=false; setText($('#count'),String(Math.max(1,Math.ceil((r.lockAt-Date.now())/1000)))); }
   else el.hidden=true;
 }
-
-/* ---------- final screen (TV + phones) ---------- */
-function doneHtml(tv){
-  const ps=players(); const top=[ps[1],ps[0],ps[2]];
-  const h=[62,100,46], rank=['2','1','3'];
-  const pod=top.map((p,i)=>p?'<div class="step"><div class="pname">'+esc(p.name)+'</div><div class="psc">'+p.score+' pts</div><div class="bar" style="--c:'+colorFor(p.pid)+';height:'+h[i]+'%">'+rank[i]+'</div></div>':'<div class="step"></div>').join('');
-  const rest=ps.slice(3);
-  return '<main class="wrap">'+(tv?tvHead():'<div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div>')+
-    '<h1 class="h1" style="text-align:center">'+(ps[0]?esc(ps[0].name)+' wins!':'Game over')+'</h1><div class="podium">'+pod+'</div>'+
-    (rest.length?'<div class="res">'+rest.map((p,i)=>'<div class="res-row" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+4)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div>':'')+'</main>';
-}
-
-/* ---------- host phone ---------- */
-function loadHq(){
-  const saved=store.get('bday_hq_'+ROOM);
-  if(saved){ try{hq=JSON.parse(saved);return}catch(e){} }
-  const n=(R()&&R().hostName)||'Aman';
-  hq=DEFAULTS.map((d,i)=>({id:'d'+(i+1),text:d[0].replace(/\{n\}/g,n),left:d[1],right:d[2],secret:null}));
-  saveHq();
-}
-const saveHq=()=>store.set('bday_hq_'+ROOM,JSON.stringify(hq));
-const secretFor=id=>{const q=hq.find(x=>x.id===id);return q?q.secret:null};
-
-function qCard(q,i){
-  return '<article class="qcard'+(q.secret==null?' unset':'')+'" data-id="'+q.id+'"><div class="qtop"><span class="qnum">'+(i+1)+'</span><p class="qt2">'+esc(q.text)+'</p><button class="x" data-del aria-label="Remove question">×</button></div>'+
-  '<div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div>'+
-  '<input type="range" class="rng" min="0" max="100" value="'+(q.secret==null?50:q.secret)+'" data-rng aria-label="Your secret number">'+
-  '<div class="qval"><b data-val>'+(q.secret==null?'–':q.secret)+'</b><small data-hint>'+(q.secret==null?'Drag to include this question':'Locked in')+'</small></div></article>';
-}
-function patchStart(){
-  const n=hq.filter(q=>q.secret!=null).length, b=$('#start'); if(!b)return;
-  b.disabled=n===0; b.textContent=n?'Start game ('+n+' question'+(n===1?'':'s')+')':'Set at least one number';
-  $('#startnote').textContent=n?'Questions without a number are skipped.':'';
-}
-function renderHost(){
-  const r=R(), hn=r.hostName||'Aman';
-  if(!hq.length)loadHq();
-  if(!r.hostId){ put('room:'+ROOM,'room',{...r,hostId:myHost()}); return; }
-  if(r.hostId!==myHost()){
-    mount('h-taken','<main class="wrap"><div class="brand">Spectrum Party</div><h1 class="h1">Someone is already hosting</h1><p class="lede">Only one phone can run the game. If that was you on another browser, take over here. Your secret numbers live on the old browser, so you would need to set them again.</p><button id="takeover" class="btn hot">Take over as host</button></main>',
-      ()=>{$('#takeover').onclick=async()=>{store.set('bday_hq_'+ROOM,'');hq=[];await put('room:'+ROOM,'room',{...R(),hostId:myHost()});}});
-    return;
-  }
-  if(r.phase==='setup'){
-    mount('h-setup:'+hq.map(q=>q.id).join(','),
-      '<main class="wrap"><header class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></header>'+
-      '<h1 class="h1">Set your secret numbers</h1><p class="lede">Drag each slider to where you really sit. Nobody else sees these. A question you leave untouched is skipped.</p>'+
-      '<div class="sugg" id="sugg"></div><div id="qlist" style="display:flex;flex-direction:column;gap:12px">'+hq.map(qCard).join('')+'</div>'+
-      '<details class="card"><summary>Add your own question</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px"><label for="nq-text">Statement</label><input id="nq-text" maxlength="120" placeholder="'+esc(hn)+' sings in the shower."><label for="nq-scale">Scale</label><select id="nq-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'<option value="custom">Custom…</option></select><div id="nq-custom" hidden style="display:flex;flex-direction:column;gap:10px"><input id="nq-left" maxlength="24" placeholder="Left end"><input id="nq-right" maxlength="24" placeholder="Right end"></div><button id="nq-add" class="btn sun">Add question</button></div></details>'+
-      '<div class="startbar"><button id="start" class="btn hot big">Start game</button><small id="startnote"></small></div></main>',
-      bindHostSetup);
-    patchStart(); patchSugg();
-    return;
-  }
-  if(r.phase==='done'){ mount('h-done','<main class="wrap"><div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div><h1 class="h1">That is a wrap</h1><p class="lede">Check the main screen for the podium. You can close this page.</p></main>'); return; }
-  const q=r.questions[r.qi]; if(!q)return; const rev=revealFor(q.id);
-  mount('h-play-'+r.qi,'<main class="wrap"><div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div>'+
-    '<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div><h1 class="qt">'+esc(q.text)+'</h1>'+
-    '<div class="mine"><span class="lede">Your secret number</span><b>'+(secretFor(q.id)==null?'?':secretFor(q.id))+'</b></div>'+
-    '<p class="lede" id="hstatus"></p><div class="btnrow"><button id="revealNow" class="btn">Reveal now</button><button id="nextQ" class="btn hot" hidden></button></div>'+
-    '<p class="warn">Keep this screen open. It runs the game.</p></main>',
-    ()=>{ $('#revealNow').onclick=()=>doReveal(); $('#nextQ').onclick=nextQuestion; });
-  const gs=guessesFor(q.id).length, n=players().length;
-  const reveal=r.rphase==='reveal';
-  $('#hstatus').textContent=reveal?'Round scored. Ready when you are.':(r.rphase==='locking'?'Locking guesses…':gs+' of '+n+' players have guessed.');
-  $('#revealNow').hidden=reveal||r.rphase==='locking';
-  const nb=$('#nextQ'); nb.hidden=!reveal; nb.textContent=r.qi+1>=r.questions.length?'Finish game':'Next question';
-}
-function bindHostSetup(){
-  const ql=$('#qlist');
-  const setSecret=el=>{ const card=el.closest('.qcard'); if(!card)return; const q=hq.find(x=>x.id===card.dataset.id); if(!q)return; q.secret=parseInt(el.value,10); saveHq(); card.classList.remove('unset'); card.querySelector('[data-val]').textContent=q.secret; card.querySelector('[data-hint]').textContent='Locked in'; patchStart(); };
-  ql.addEventListener('input',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
-  ql.addEventListener('change',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
-  ql.addEventListener('pointerup',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
-  ql.addEventListener('click',e=>{const b=e.target.closest('[data-del]'); if(!b)return; const id=b.closest('.qcard').dataset.id; hq=hq.filter(q=>q.id!==id); saveHq(); queueRender();});
-  $('#nq-scale').onchange=()=>{$('#nq-custom').hidden=$('#nq-scale').value!=='custom'; $('#nq-custom').style.display=$('#nq-custom').hidden?'none':'flex';};
-  $('#nq-add').onclick=()=>{
-    const text=($('#nq-text').value||'').trim(); if(!text){toast('Write the statement first');return}
-    const k=$('#nq-scale').value; let left,right;
-    if(k==='custom'){left=($('#nq-left').value||'').trim()||'Never';right=($('#nq-right').value||'').trim()||'Always';} else {[left,right]=SCALES[k];}
-    hq.push({id:'c'+rid(6),text,left,right,secret:null}); saveHq(); queueRender(); setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50);
-  };
-  $('#sugg').addEventListener('click',async e=>{
-    const a=e.target.closest('[data-add]'), d=e.target.closest('[data-dismiss]');
-    const sid=(a||d)&&(a||d).dataset.sid; if(!sid)return; const row=cache.get(sid); if(!row)return;
-    if(a){ hq.push({id:'s'+rid(6),text:row.data.text,left:row.data.left,right:row.data.right,secret:null}); saveHq(); toast('Added at the bottom. Set its number.'); }
-    await put(sid,'sugg',{...row.data,status:a?'used':'dismissed'});
-  });
-  $('#start').onclick=async()=>{
-    const list=hq.filter(q=>q.secret!=null).map(({id,text,left,right})=>({id,text,left,right})); if(!list.length)return;
-    $('#start').disabled=true; $('#start').textContent='Starting…';
-    await put('room:'+ROOM,'room',{...R(),phase:'playing',questions:list,qi:0,rphase:'guess'});
-  };
-}
-function patchSugg(){
-  const el=$('#sugg'); if(!el)return;
-  const list=rows('sugg').filter(r=>r.data.status==='new');
-  setHtml(el,list.length?'<h2 class="qlabel">Suggested by players ('+list.length+')</h2>'+list.map(r=>'<div class="sugg-item"><p>'+esc(r.data.text)+'<small>'+esc(r.data.left)+' ↔ '+esc(r.data.right)+' · from '+esc(r.data.by||'a player')+'</small></p><button class="btn sun" data-add data-sid="'+r.id+'">Add</button><button class="btn ghost" data-dismiss data-sid="'+r.id+'">Skip</button></div>').join(''):'');
-}
-
-/* ---------- host engine ---------- */
-let eng={qi:-1,locking:false,revealed:false,first:0};
-function engineTick(){
-  if(VIEW!=='host')return; const r=R();
-  if(!r||r.phase!=='playing'||r.hostId!==myHost())return;
-  const q=r.questions[r.qi]; if(!q)return;
-  if(eng.qi!==r.qi) eng={qi:r.qi,locking:false,revealed:false,first:0};
-  if(r.rphase==='guess'&&!eng.locking&&!eng.revealed){
-    const g=guessesFor(q.id).length, n=players().length;
-    if(g>0&&!eng.first)eng.first=Date.now();
-    if((n>0&&g>=n)||(eng.first&&Date.now()-eng.first>CAP_MS)) startLock();
-  } else if(r.rphase==='locking'&&!eng.locking&&!eng.revealed){ eng.locking=true; setTimeout(doReveal,2000); }
-}
-async function startLock(){
-  if(eng.locking||eng.revealed)return; eng.locking=true;
-  await put('room:'+ROOM,'room',{...R(),rphase:'locking'});
-  setTimeout(doReveal,LOCK_MS);
-}
-async function doReveal(){
-  const r=R(); if(!r||r.phase!=='playing'||r.rphase==='reveal'||eng.revealed)return; eng.revealed=true;
-  await loadRoom();
-  const q=r.questions[r.qi]; const actual=secretFor(q.id); if(actual==null){toast('Secret number missing on this phone');return}
-  if(!revealFor(q.id)){
-    const gs=guessesFor(q.id), ps=players();
-    const res=ps.map(p=>{const g=gs.find(x=>x.data.pid===p.pid); const v=g?g.data.value:null; return {pid:p.pid,name:p.name,value:v,dist:v==null?null:Math.abs(v-actual),pts:0,best:false}});
-    const dists=res.filter(x=>x.dist!=null).map(x=>x.dist); const bestD=dists.length?Math.min(...dists):null;
-    res.forEach(x=>{ if(x.dist==null)return; x.best=x.dist===bestD; x.pts=tierPts(x.dist)+(x.best?3:0); });
-    await put('reveal:'+ROOM+':'+q.id,'reveal',{qid:q.id,actual,results:res});
-    for(const x of res){ const p=ps.find(y=>y.pid===x.pid); await put('player:'+ROOM+':'+x.pid,'player',{name:p.name,score:p.score+x.pts}); }
-  }
-  await put('room:'+ROOM,'room',{...R(),rphase:'reveal'});
-}
 async function nextQuestion(){
-  const r=R(); $('#nextQ').disabled=true;
-  if(r.qi+1<r.questions.length) await put('room:'+ROOM,'room',{...r,qi:r.qi+1,rphase:'guess'});
+  const r=R(), b=$('#tvAct'); if(b)b.disabled=true;
+  if(r.qi+1<r.questions.length) await put('room:'+ROOM,'room',{...r,qi:r.qi+1,rphase:'guess',lockAt:null});
   else await put('room:'+ROOM,'room',{...r,phase:'done'});
 }
 
-/* ---------- player phone ---------- */
-const pHead=()=>'<div class="phead"><span class="brand">Spectrum Party</span><span class="code">Room<b>'+ROOM+'</b></span></div>';
-function renderPlayer(){
+/* ---- TV engine: runs only on the big screen ---- */
+let eng={qi:-1,first:0,busy:false};
+function tvEngine(){
+  const r=R(); if(!r||r.phase!=='playing')return;
+  const q=(r.questions||[])[r.qi]; if(!q)return;
+  if(eng.qi!==r.qi)eng={qi:r.qi,first:0,busy:false};
+  if(eng.busy)return;
+  if(r.rphase==='guess'){
+    const ps=players(), n=answered(ps,q.id).length;
+    if(n>0&&!eng.first)eng.first=Date.now();
+    if((ps.length>0&&n>=ps.length)||(eng.first&&Date.now()-eng.first>CAP_MS)){
+      eng.busy=true; put('room:'+ROOM,'room',{...r,rphase:'locking',lockAt:Date.now()+LOCK_MS}).finally(()=>{eng.busy=false});
+    }
+  } else if(r.rphase==='locking'&&Date.now()>=(r.lockAt||0)){
+    eng.busy=true; doReveal(false).finally(()=>{eng.busy=false});
+  }
+}
+async function doReveal(manual){
+  const r0=R(); if(!r0||r0.phase!=='playing'||r0.rphase==='reveal')return;
+  if(manual){ if(eng.busy)return; eng.busy=true; }
+  try{
+    await refreshNow();
+    const r=R(); if(!r||r.rphase==='reveal')return;
+    const q=r.questions[r.qi], k=keyRow(), actual=k&&k.secrets?k.secrets[q.id]:null;
+    if(actual==null){ toast('Missing the secret number for this question',true); return; }
+    if(!revealFor(q.id)){
+      const ps=players();
+      const res=ps.map(p=>{const v=answersOf(p.pid)[q.id]; const val=v==null?null:v; return {pid:p.pid,name:p.name,value:val,dist:val==null?null:Math.abs(val-actual),pts:0,best:false}});
+      const ds=res.filter(x=>x.dist!=null).map(x=>x.dist), bd=ds.length?Math.min(...ds):null;
+      res.forEach(x=>{if(x.dist==null)return;x.best=x.dist===bd;x.pts=tierPts(x.dist)+(x.best?3:0)});
+      const ok=await put('reveal:'+ROOM+':'+q.id,'reveal',{qid:q.id,actual,results:res});
+      if(!ok){toast('Could not save the result. Try again.',true);return}
+    }
+    await put('room:'+ROOM,'room',{...R(),rphase:'reveal'});
+  } finally{ if(manual)eng.busy=false; }
+}
+
+/* ---------- Aman's phone ---------- */
+let hq=[], hHandled={}, hReady=false, hInit=false, hSaving=false, hDirty=false, hTimer=null;
+const hostOk=()=>store.get('bday_ok_'+ROOM)==='1';
+function initHost(){
+  const h=hostRow();
+  if(h&&Array.isArray(h.questions)){ hq=h.questions; hHandled=h.handled||{}; hReady=!!h.ready; }
+  else{ const n=(R()&&R().hostName)||'Aman'; hq=DEFAULTS.map((d,i)=>({id:'d'+(i+1),text:d[0].replace(/\{n\}/g,n),left:d[1],right:d[2],secret:null})); saveHostSoon(0); }
+  hInit=true;
+}
+function saveHostSoon(ms){ clearTimeout(hTimer); hTimer=setTimeout(saveHost,ms==null?350:ms); }
+async function saveHost(){
+  if(hSaving){hDirty=true;return} hSaving=true;
+  try{ do{ hDirty=false; const ok=await put('host:'+ROOM,'host',{questions:hq,handled:hHandled,ready:hReady,at:Date.now()},ROOM+'S'); if(!ok)toast('Could not save. Check your connection.',true); }while(hDirty); }
+  finally{ hSaving=false; }
+}
+function qCard(q,i){
+  return '<article class="qcard'+(q.secret==null?' unset':'')+'" data-id="'+esc(q.id)+'"><div class="qtop"><span class="qnum">'+(i+1)+'</span><p class="qt2">'+esc(q.text)+'</p><button class="x" data-del aria-label="Remove question">×</button></div>'+
+  '<div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div>'+
+  '<input type="range" class="rng" min="0" max="100" value="'+(q.secret==null?50:q.secret)+'" data-rng aria-label="Your secret number">'+
+  '<div class="qval"><b data-val>'+(q.secret==null?'–':q.secret)+'</b><small data-hint>'+(q.secret==null?'Drag to include this question':'Locked in')+'</small><button class="btn sm" data-fifty>Use 50</button></div></article>';
+}
+function patchStart(){
+  const set=hq.filter(q=>q.secret!=null).length, b=$('#rdy'); if(!b)return;
+  b.disabled=!hReady&&set===0;
+  b.textContent=hReady?'Ready ✓  Tap to undo':(set?'I\'m ready ('+set+' question'+(set===1?'':'s')+')':'Set at least one number');
+  b.className='btn big '+(hReady?'sun':'hot');
+  setText($('#startnote'),hReady?'Waiting for the big screen to start. You can still change numbers.':'Questions without a number are skipped.');
+}
+function patchSugg(){
+  const el=$('#sugg'); if(!el)return;
+  const list=rows('sugg').filter(r=>!hHandled[r.id]);
+  setHtml(el,list.length?'<h2 class="qlabel">Suggested by players ('+list.length+')</h2>'+list.map(r=>'<div class="sugg-item"><p>'+esc(r.data.text)+'<small>'+esc(r.data.left)+' ↔ '+esc(r.data.right)+' · from '+esc(r.data.by||'a player')+'</small></p><button class="btn sun sm" data-add data-sid="'+esc(r.id)+'">Add</button><button class="btn ghost sm" data-dismiss data-sid="'+esc(r.id)+'">Skip</button></div>').join(''):'');
+}
+function renderHost(){
   const r=R(), hn=r.hostName||'Aman';
-  const pid=store.get('bday_pid_'+ROOM), prow=pid&&cache.get('player:'+ROOM+':'+pid);
-  if(!prow){
-    mount('p-join','<main class="wrap">'+pHead()+'<h1 class="h1">Join the game</h1><p class="lede">Can you read '+esc(hn)+' better than your friends can?</p><section class="card"><label for="pname">Your name</label><input id="pname" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'"><button id="pjoin" class="btn sun big">Join</button></section></main>',
-      ()=>{ const go=async()=>{const name=($('#pname').value||'').trim(); if(!name){toast('Type your name');return} store.set('bday_name',name); const id=pid||('p'+rid(8)); store.set('bday_pid_'+ROOM,id); $('#pjoin').disabled=true; await put('player:'+ROOM+':'+id,'player',{name,score:0});}; $('#pjoin').onclick=go; $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
+  if(!hostOk()){
+    mount('h-pin','<main class="wrap">'+pHead()+'<h1 class="h1">Birthday person</h1><p class="lede">Enter the host PIN from the person running the big screen.</p><section class="card"><label for="pin">Host PIN</label><input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off"><button id="pinGo" class="btn hot big">Continue</button></section></main>',
+      ()=>{ const go=()=>{const p=cache.get('pin:'+ROOM); if(p&&String(p.data.pin)===$('#pin').value.trim()){store.set('bday_ok_'+ROOM,'1');curSig='';render()}else toast('Wrong host PIN',true)}; $('#pinGo').onclick=go; $('#pin').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
     return;
   }
-  const me=players().find(p=>p.pid===pid)||{name:prow.data.name,score:prow.data.score||0,pid};
+  if(!hInit)initHost();
+  if(r.phase==='done'){ mount('h-done','<main class="wrap">'+pHead()+'<h1 class="h1">That\'s a wrap</h1><p class="lede">Check the big screen for the podium. You can close this page.</p></main>'); return; }
+  if(r.phase==='playing'){
+    const q=(r.questions||[])[r.qi];
+    mount('h-live:'+r.qi,'<main class="wrap">'+pHead()+'<h1 class="h1">Game on</h1><p class="lede">Put your phone away. The big screen runs everything now. Bluff well.</p>'+(q?'<div class="card"><div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div><p class="qt">'+esc(q.text)+'</p></div>':'')+'</main>');
+    return;
+  }
+  mount('h-setup:'+hq.map(q=>q.id).join(','),
+    '<main class="wrap">'+pHead()+'<h1 class="h1">Set your secret numbers</h1><p class="lede">Drag each slider to where you really sit. Nobody sees these until the reveal. A question you leave untouched is skipped.</p>'+
+    '<div class="sugg" id="sugg"></div><div id="qlist" style="display:flex;flex-direction:column;gap:12px">'+hq.map(qCard).join('')+'</div>'+
+    '<details class="card"><summary>Add your own question</summary><div class="stack"><label for="nq-text">Statement</label><input id="nq-text" maxlength="120" placeholder="'+esc(hn)+' sings in the shower."><label for="nq-scale">Scale</label><select id="nq-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'<option value="custom">Custom…</option></select><div id="nq-custom" class="stack" hidden style="margin-top:0"><input id="nq-left" maxlength="24" placeholder="Left end"><input id="nq-right" maxlength="24" placeholder="Right end"></div><button id="nq-add" class="btn sun">Add question</button></div></details>'+
+    '<div class="startbar"><button id="rdy" class="btn hot big">Set at least one number</button><small id="startnote"></small></div></main>',
+    bindHostSetup,true);
+  patchStart(); patchSugg();
+}
+function bindHostSetup(){
+  const ql=$('#qlist');
+  const setSecret=el=>{ const card=el.closest('.qcard'); if(!card)return; const q=hq.find(x=>x.id===card.dataset.id); if(!q)return;
+    q.secret=parseInt(el.value,10); card.classList.remove('unset'); setText(card.querySelector('[data-val]'),String(q.secret)); setText(card.querySelector('[data-hint]'),'Locked in'); patchStart(); saveHostSoon(); };
+  ql.addEventListener('input',e=>{if(e.target.matches('[data-rng]'))setSecret(e.target)});
+  ql.addEventListener('click',e=>{
+    const f=e.target.closest('[data-fifty]'); if(f){const rng=f.closest('.qcard').querySelector('[data-rng]'); rng.value=50; setSecret(rng); return}
+    const d=e.target.closest('[data-del]'); if(!d)return; const id=d.closest('.qcard').dataset.id; hq=hq.filter(q=>q.id!==id); saveHostSoon(0); queueRender();
+  });
+  $('#nq-scale').onchange=()=>{$('#nq-custom').hidden=$('#nq-scale').value!=='custom'};
+  $('#nq-add').onclick=()=>{
+    const text=($('#nq-text').value||'').trim(); if(!text)return toast('Write the statement first',true);
+    const k=$('#nq-scale').value; let left,right;
+    if(k==='custom'){left=($('#nq-left').value||'').trim()||'Never';right=($('#nq-right').value||'').trim()||'Always';} else {[left,right]=SCALES[k];}
+    hq.push({id:'c'+rid(6),text,left,right,secret:null}); saveHostSoon(0); queueRender(); setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),60);
+  };
+  $('#sugg').addEventListener('click',e=>{
+    const a=e.target.closest('[data-add]'), d=e.target.closest('[data-dismiss]'); const sid=(a||d)&&(a||d).dataset.sid; if(!sid)return;
+    const row=cache.get(sid); hHandled[sid]=1;
+    if(a&&row){ hq.push({id:'s'+rid(6),text:row.data.text,left:row.data.left,right:row.data.right,secret:null}); toast('Added at the bottom. Set its number.'); queueRender(); setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),60); }
+    saveHostSoon(0); patchSugg();
+  });
+  $('#rdy').onclick=()=>{ hReady=!hReady; saveHostSoon(0); patchStart(); };
+}
+
+/* ---------- player phone ---------- */
+function renderPlayer(){
+  const r=R(), hn=r.hostName||'Aman', pid=store.get('bday_pid_'+ROOM);
+  if(pid&&rows('gone').some(g=>g.id==='gone:'+ROOM+':'+pid)){ mount('p-gone','<main class="wrap">'+pHead()+'<h1 class="h1">You were removed</h1><p class="lede">The person running the big screen took you out of this room.</p></main>'); return; }
+  const prow=pid&&cache.get('player:'+ROOM+':'+pid);
+  if(!prow){
+    mount('p-join','<main class="wrap">'+pHead()+'<h1 class="h1">Join the game</h1><p class="lede">Can you read '+esc(hn)+' better than your friends can?</p><section class="card"><label for="pname">Your name</label><input id="pname" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'"><button id="pjoin" class="btn sun big">Join</button></section></main>',
+      ()=>{ const go=async()=>{const name=($('#pname').value||'').trim(); if(!name)return toast('Type your name',true);
+        const dup=players().find(p=>p.name.toLowerCase()===name.toLowerCase()); if(dup&&!confirmDup){confirmDup=true;return toast('Someone named '+dup.name+' is in. Tap Join again if that is you, or add an initial.',true)}
+        $('#pjoin').disabled=true; await joinAs(ROOM,dup&&confirmDup?dup.name:name,dup&&confirmDup?dup.pid:null); $('#pjoin').disabled=false;};
+        let confirmDup=false; $('#pjoin').onclick=go; $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
+    return;
+  }
+  const me=players().find(p=>p.pid===pid)||{name:prow.data.name,score:0,pid};
   if(r.phase==='setup'){
-    mount('p-wait','<main class="wrap">'+pHead()+'<h1 class="h1">You are in, '+esc(me.name)+'.</h1><p class="lede" id="pwait"></p>'+
+    mount('p-wait','<main class="wrap">'+pHead()+'<h1 class="h1">You\'re in, '+esc(me.name)+'.</h1><p class="lede" id="pwait"></p>'+
       '<section class="card"><h2>Suggest a question</h2><p class="lede">Something '+esc(hn)+' will have to dodge. '+esc(hn)+' decides if it goes in.</p><label for="sg-text">Statement</label><input id="sg-text" maxlength="120" placeholder="'+esc(hn)+' has stalked an ex online."><label for="sg-scale">Scale</label><select id="sg-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'</select><button id="sg-send" class="btn sun">Send to '+esc(hn)+'</button></section>'+
       '<section><h2 class="qlabel" style="margin-bottom:8px">In the room</h2><div class="chips" id="chips"></div></section></main>',
-      ()=>{ $('#sg-send').onclick=async()=>{const text=($('#sg-text').value||'').trim(); if(!text){toast('Write the statement first');return} const [l,rr]=SCALES[$('#sg-scale').value]; await put('sugg:'+ROOM+':'+rid(8),'sugg',{text,left:l,right:rr,by:me.name,status:'new'}); $('#sg-text').value=''; toast('Sent to '+hn);}; });
-    $('#pwait').textContent=r.hostId?'Waiting for '+hn+' to start the game.':'Waiting for the game to be set up.';
+      ()=>{ $('#sg-send').onclick=async()=>{const text=($('#sg-text').value||'').trim(); if(!text)return toast('Write the statement first',true); const [l,rr]=SCALES[$('#sg-scale').value];
+        const ok=await put('sugg:'+ROOM+':'+rid(8),'sugg',{text,left:l,right:rr,by:me.name}); if(ok){$('#sg-text').value='';toast('Sent to '+hn)}else toast('Could not send. Try again.',true)}; });
+    setText($('#pwait'),'Waiting for the game to start.');
     setHtml($('#chips'),chipsHtml());
     return;
   }
@@ -505,56 +633,55 @@ function renderPlayer(){
       '<div class="res">'+ps.map((p,i)=>'<div class="res-row'+(p.pid===pid?' best':'')+'" style="--c:'+colorFor(p.pid)+'"><span class="dot"></span><span class="nm">'+(i+1)+'. '+esc(p.name)+'</span><span></span><span class="tot">'+p.score+'</span></div>').join('')+'</div></main>',()=>{if(rank===1)pop(true)});
     return;
   }
-  const q=r.questions[r.qi]; if(!q)return;
-  const rev=revealFor(q.id), mine=cache.get('guess:'+ROOM+':'+q.id+':'+pid);
+  const q=(r.questions||[])[r.qi]; if(!q)return;
+  const rev=revealFor(q.id), mine=answersOf(pid)[q.id];
   const head=pHead()+'<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div><h1 class="qt">'+esc(q.text)+'</h1>';
-  if(r.rphase==='reveal'&&rev){
-    const x=rev.results.find(y=>y.pid===pid)||{value:null,pts:0};
-    const rank=players().findIndex(p=>p.pid===pid)+1;
-    mount('p-r-'+r.qi,'<main class="wrap">'+head+scaleBar(q,pinsFrom(rev),rev.actual)+
+  if(r.rphase==='reveal'){
+    if(!rev){ mount('p-scoring:'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><p class="lede">Scoring…</p></div></main>'); return; }
+    const x=rev.results.find(y=>y.pid===pid)||{value:null,pts:0}, rank=players().findIndex(p=>p.pid===pid)+1;
+    mount('p-r:'+r.qi,'<main class="wrap">'+head+scaleBar(q,pinsFrom(rev),rev.actual)+
       '<div class="card" style="text-align:center"><div class="qlabel">'+esc(hn)+' landed on</div><div class="bigpts" style="color:var(--hot)">'+rev.actual+'</div>'+
       '<div class="you-line"><span>You said</span><span>'+(x.value==null?'no guess':x.value)+'</span></div><div class="you-line"><span>This round</span><span style="color:var(--mint)">+'+x.pts+'</span></div><div class="you-line"><span>Total</span><span>'+me.score+' · rank '+rank+'</span></div>'+(x.best?'<span class="tag">Closest!</span>':'')+'</div>'+
       '<p class="warn">Look at the big screen for everyone\'s guesses.</p></main>',()=>{animatePins();if(x.best)setTimeout(()=>pop(false),1700)});
     return;
   }
-  if(mine){
-    mount('p-l-'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><div class="qlabel">Locked in</div><div class="bigpts" style="color:var(--sun)">'+mine.data.value+'</div><p class="lede" id="lstat"></p></div></main><div class="lockover" id="lockover" hidden><span id="count">5</span><small>Locking guesses</small></div>');
-    const n=players().length, g=guessesFor(q.id).length;
-    $('#lstat').textContent=r.rphase==='locking'?'Revealing in a moment…':g+' of '+n+' locked in. Waiting for the rest.';
-    syncLockOverlay(r);
+  if(mine!=null){
+    mount('p-l:'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><div class="qlabel">Locked in</div><div class="bigpts" style="color:var(--sun)">'+mine+'</div><p class="lede" id="lstat"></p></div></main>');
+    const ps=players(); setText($('#lstat'),r.rphase==='locking'?'Revealing in a moment…':answered(ps,q.id).length+' of '+ps.length+' locked in. Waiting for the rest.');
     return;
   }
   if(r.rphase!=='guess'){
-    mount('p-late-'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><p class="lede">This round already locked. Catch the next one.</p></div></main>');
+    mount('p-late:'+r.qi,'<main class="wrap">'+head+'<div class="card" style="text-align:center"><p class="lede">This round already locked. Catch the next one.</p></div></main>');
     return;
   }
-  mount('p-g-'+r.qi,'<main class="wrap">'+head+'<p class="lede">Where did '+esc(hn)+' place himself? Ask him anything, then drag.</p>'+
+  mount('p-g:'+r.qi,'<main class="wrap">'+head+'<p class="lede">Where did '+esc(hn)+' place himself? Ask him anything, then drag.</p>'+
     '<div class="card"><div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div><input id="gr" type="range" class="rng" min="0" max="100" value="50" aria-label="Your guess"><div class="bignum" id="gv">50</div></div>'+
     '<button id="lock" class="btn sun big">Lock it in</button></main>',
-    ()=>{ const gr=$('#gr'); gr.addEventListener('input',()=>{$('#gv').textContent=gr.value}); $('#lock').onclick=async()=>{ $('#lock').disabled=true; await put('guess:'+ROOM+':'+q.id+':'+pid,'guess',{qid:q.id,pid,value:parseInt(gr.value,10)}); }; });
+    ()=>{ const gr=$('#gr'); gr.addEventListener('input',()=>setText($('#gv'),gr.value));
+      $('#lock').onclick=async()=>{ const b=$('#lock'); b.disabled=true; b.textContent='Sending…';
+        const ok=await put('ans:'+ROOM+':'+pid,'ans',{answers:{...answersOf(pid),[q.id]:parseInt(gr.value,10)}});
+        if(!ok){b.disabled=false;b.textContent='Lock it in';toast('Did not send. Tap again.',true)} }; });
 }
 
-/* ---------- boot ---------- */
+/* ---------- render / boot ---------- */
 function render(){
   if(!ROOM){ mount('landing',landingHtml(),bindLanding); return; }
-  if(!roomRow()){
-    if(!loaded){ mount('loading','<div class="center">Loading…</div>'); return; }
-    mount('noroom','<main class="wrap"><div class="brand">Spectrum Party</div><h1 class="h1">Room '+ROOM+' not found</h1><p class="lede">Check the code and try again.</p><a class="btn sun" style="text-align:center;text-decoration:none" href="'+base+'">Back</a></main>'); return;
+  if(!loaded){ mount('loading:'+VIEW,'<div class="center">Connecting…</div>'); return; }
+  if(!cache.get('room:'+ROOM)){
+    mount('noroom','<main class="wrap"><div class="brand">Spectrum Party</div><h1 class="h1">Room '+esc(ROOM)+' not found</h1><p class="lede">Check the code on the big screen and try again.</p><a class="btn sun" href="'+esc(base)+'">Back</a></main>'); return;
   }
   if(VIEW==='tv')renderTV(); else if(VIEW==='host')renderHost(); else renderPlayer();
 }
-function tickUI(){ const r=R(); if(r&&r.phase==='playing')syncLockOverlay(r); }
-async function startRoom(){
-  await loadRoom(); loaded=true; subscribe(); curSig=''; render();
-  setInterval(engineTick,500); setInterval(tickUI,250);
+function tick(){
+  if(VIEW==='tv')tvEngine();
+  const r=R(); if(r&&r.phase==='playing'&&VIEW==='tv')syncLock(r);
 }
-function boot(){
-  if(!window.supabase){ app.className='center'; app.textContent='Could not load the game libraries. Check your connection and reload.'; return; }
-  sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});
-  if(!ROOM){ render(); return; }
-  startRoom();
-}
-boot();
+document.addEventListener('keydown',e=>{
+  if(VIEW!=='tv'||e.target.matches('input,textarea,select,button'))return;
+  if(e.code==='Space'||e.key==='Enter'){const b=$('#tvAct'); if(b&&!b.disabled){e.preventDefault();b.click()}}
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
+if(ROOM)enterRoom(VIEW); else render();
 })();
 </script>
 </body>
