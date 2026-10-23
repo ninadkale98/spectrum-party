@@ -284,6 +284,11 @@ const LOCK_MS=4000, CAP_MS=60000, PEND_MS=5000;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const sstore={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}};
+/* Player identity is per browser TAB (sessionStorage), so several people can join from tabs of one browser
+   without becoming the same player. localStorage only remembers it so a phone can get back in under the same name. */
+let MYPID=null;
+const myPid=()=>MYPID||(MYPID=sstore.get('bday_pid_'+ROOM)||null);
 const rid=n=>{const a='abcdefghijklmnopqrstuvwxyz0123456789';let s='';for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const clean=s=>String(s||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
@@ -431,7 +436,7 @@ function landingHtml(){
   '<h1 class="logo"><span class="k">Kaun Banega</span><span class="am"><b>AMAN</b>aire</span></h1><p class="lede">How well do you know Aman? He secretly places himself on a scale. Everyone else argues, bluffs, and guesses.</p>'+
   '<section class="card"><h2>Join a game</h2><label for="jCode">Room code (shown on the big screen)</label>'+
   '<input id="jCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'">'+
-  '<label for="jName">Your name</label><input id="jName" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'">'+
+  '<label for="jName">Your name</label><input id="jName" maxlength="14" autocomplete="off" value="'+esc(sstore.get('bday_name')||'')+'">'+
   '<button id="jGo" class="btn sun big">Join</button><div id="jMsg"></div></section>'+
   '<details class="card"><summary>I\'m the birthday person</summary><div class="stack"><label for="hCode">Room code</label><input id="hCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'"><label for="hPin">Host PIN</label><input id="hPin" type="tel" inputmode="numeric" maxlength="4" placeholder="4 digits" autocomplete="off"><button id="hGo" class="btn hot">Continue</button></div></details>'+
   '<details class="card"><summary>Set up the big screen</summary><div class="stack"><label for="cName">Birthday person\'s name</label><input id="cName" maxlength="20" value="Aman" autocomplete="off"><label for="cPin">Host PIN (tell only the birthday person)</label><input id="cPin" type="tel" inputmode="numeric" maxlength="4" value="'+String(Math.floor(1000+Math.random()*9000))+'" autocomplete="off"><button id="cGo" class="btn hot">Create room on this screen</button></div></details></main>';
@@ -447,7 +452,7 @@ async function joinAs(code,name,pid){
   const id=pid||('p'+rid(7));
   const ok=await put('player:'+code+':'+id,'player',{name},code);
   if(!ok){toast('Could not join. Check your internet and try again.',true);return false}
-  store.set('bday_pid_'+code,id); store.set('bday_name',name); ROOM=code; enterRoom('play'); return true;
+  MYPID=id; sstore.set('bday_pid_'+code,id); store.set('bday_pid_'+code,id); store.set('bday_name',name); sstore.set('bday_name',name); ROOM=code; enterRoom('play'); return true;
 }
 async function landingJoin(){
   const code=$('#jCode').value.trim(), name=$('#jName').value.trim();
@@ -457,8 +462,11 @@ async function landingJoin(){
   try{
     const rs=await api('GET','?select=id,kind,data&room=eq.'+code+'&kind=in.(room,player)');
     if(!rs.some(r=>r.id==='room:'+code)){toast('No room with that code. Check the big screen.',true);return}
-    const pl=rs.filter(r=>r.kind==='player'), mine=store.get('bday_pid_'+code);
-    if(mine&&pl.some(r=>r.id==='player:'+code+':'+mine)){ store.set('bday_name',name); ROOM=code; enterRoom('play'); return }
+    const pl=rs.filter(r=>r.kind==='player'), same=n=>(n||'').trim().toLowerCase()===name.toLowerCase();
+    for(const mine of [sstore.get('bday_pid_'+code),store.get('bday_pid_'+code)]){
+      const row=mine&&pl.find(r=>r.id==='player:'+code+':'+mine);
+      if(row&&same(row.data.name)){ await joinAs(code,row.data.name,mine); return }
+    }
     const dup=pl.find(r=>(r.data.name||'').trim().toLowerCase()===name.toLowerCase());
     if(dup){
       $('#jMsg').innerHTML='<p class="warn" style="margin:10px 0">Someone named '+esc(dup.data.name)+' is already in this room.</p><div class="btnrow"><button id="jMe" class="btn">That\'s me</button><button id="jOther" class="btn sun">Someone else</button></div>';
@@ -760,7 +768,7 @@ async function pendTick(){
   setText($('#pnum'),String(Math.max(1,Math.ceil(left/1000))));
   if(left>0)return;
   const p=pend; cancelPend();
-  const r=R(), pid=store.get('bday_pid_'+ROOM), cur=r&&(r.questions||[])[r.qi];
+  const r=R(), pid=myPid(), cur=r&&(r.questions||[])[r.qi];
   if(r&&r.phase==='playing'&&r.rphase==='guess'&&cur&&cur.id===p.qid){
     const ok=await put('ans:'+ROOM+':'+pid,'ans',{answers:{...answersOf(pid),[p.qid]:p.value}});
     if(!ok)toast('Did not send. Tap Lock it in again.',true);
@@ -768,14 +776,16 @@ async function pendTick(){
   curSig=''; render();
 }
 function renderPlayer(){
-  const r=R(), hn=r.hostName||'Aman', pid=store.get('bday_pid_'+ROOM);
+  const r=R(), hn=r.hostName||'Aman', pid=myPid();
   if(pid&&rows('gone').some(g=>g.id==='gone:'+ROOM+':'+pid)){ mount('p-gone','<main class="wrap">'+pHead()+'<h1 class="h1">You were removed</h1><p class="lede">The person running the big screen took you out of this room.</p></main>'); return; }
   const prow=pid&&cache.get('player:'+ROOM+':'+pid);
   if(!prow){
-    mount('p-join','<main class="wrap">'+pHead()+'<h1 class="h1">Join the game</h1><p class="lede">Can you read '+esc(hn)+' better than your friends can?</p><section class="card"><label for="pname">Your name</label><input id="pname" maxlength="14" autocomplete="off" value="'+esc(store.get('bday_name')||'')+'"><button id="pjoin" class="btn sun big">Join</button></section></main>',
+    mount('p-join','<main class="wrap">'+pHead()+'<h1 class="h1">Join the game</h1><p class="lede">Can you read '+esc(hn)+' better than your friends can?</p><section class="card"><label for="pname">Your name</label><input id="pname" maxlength="14" autocomplete="off" value="'+esc(sstore.get('bday_name')||'')+'"><button id="pjoin" class="btn sun big">Join</button></section></main>',
       ()=>{ const go=async()=>{const name=($('#pname').value||'').trim(); if(!name)return toast('Type your name',true);
+        const lp=store.get('bday_pid_'+ROOM), back=lp&&players().find(p=>p.pid===lp&&p.name.toLowerCase()===name.toLowerCase());
+        if(back){ $('#pjoin').disabled=true; await joinAs(ROOM,back.name,back.pid); return; }
         const dup=players().find(p=>p.name.toLowerCase()===name.toLowerCase()); if(dup&&!confirmDup){confirmDup=true;return toast('Someone named '+dup.name+' is in. Tap Join again if that is you, or add an initial.',true)}
-        $('#pjoin').disabled=true; await joinAs(ROOM,dup&&confirmDup?dup.name:name,dup&&confirmDup?dup.pid:null); $('#pjoin').disabled=false;};
+        $('#pjoin').disabled=true; await joinAs(ROOM,dup&&confirmDup?dup.name:name,dup&&confirmDup?dup.pid:null); const jb=$('#pjoin'); if(jb)jb.disabled=false;};
         let confirmDup=false; $('#pjoin').onclick=go; $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
     return;
   }
