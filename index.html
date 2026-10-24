@@ -110,8 +110,12 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .tierline span{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
 .tierline b{color:var(--gold)}
 .tierline .bonus b{color:var(--mint)}
+.chk{display:flex;gap:10px;align-items:center;font-weight:600;color:var(--text)}
+.chk input{width:22px;height:22px;accent-color:var(--gold)}
+.muted{color:var(--muted)}
 .lockbar{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:6px;margin:0 -16px;padding:18px 16px max(12px,env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(11,15,35,0),rgba(11,15,35,.94) 32%)}
 .lockbar .warn{margin:0;text-align:center}
+.lockbar[hidden]{display:none}
 @media (max-height:720px){
   body:not(.tv) .lz-in{padding-top:10px;padding-bottom:10px}
   body:not(.tv) .qt{font-size:clamp(16px,4.4vw,20px)}
@@ -432,7 +436,7 @@ const answersOf=pid=>{const r=cache.get('ans:'+ROOM+':'+pid);return (r&&r.data.a
 function players(){
   const gone=new Set(rows('gone').map(r=>r.id.split(':')[2])), tot={};
   rows('reveal').forEach(r=>(r.data.results||[]).forEach(x=>{tot[x.pid]=(tot[x.pid]||0)+(x.pts||0)}));
-  return rows('player').map(r=>({pid:r.id.split(':')[2],name:r.data.name||'?',score:tot[r.id.split(':')[2]]||0}))
+  return rows('player').map(r=>({pid:r.id.split(':')[2],name:r.data.name||'?',at:r.data.at,score:tot[r.id.split(':')[2]]||0}))
     .filter(p=>!gone.has(p.pid)).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
 }
 const answered=(ps,qid)=>ps.filter(p=>answersOf(p.pid)[qid]!=null);
@@ -572,13 +576,8 @@ async function landingJoin(){
       const row=mine&&pl.find(r=>r.id==='player:'+code+':'+mine);
       if(row&&same(row.data.name)){ await joinAs(code,row.data.name,mine,row.data.at); return }
     }
-    const dup=pl.find(r=>(r.data.name||'').trim().toLowerCase()===name.toLowerCase());
-    if(dup){
-      $('#jMsg').innerHTML='<p class="warn" style="margin:10px 0">Someone named '+esc(dup.data.name)+' is already in this room.</p><div class="btnrow"><button id="jMe" class="btn">That\'s me</button><button id="jOther" class="btn sun">Someone else</button></div>';
-      $('#jMe').onclick=()=>joinAs(code,dup.data.name,dup.id.split(':')[2],dup.data.at);
-      $('#jOther').onclick=()=>{$('#jMsg').innerHTML='';$('#jName').focus();toast('Add an initial, like "'+name+' B"')};
-      return;
-    }
+    const dup=pl.find(r=>same(r.data.name));
+    if(dup){ toast('Welcome back, '+dup.data.name); await joinAs(code,dup.data.name,dup.id.split(':')[2],dup.data.at); return; }
     await joinAs(code,name);
   }catch(e){ toast('Could not connect. Check your internet and try again.',true); }
   finally{ btn.disabled=false; }
@@ -639,17 +638,15 @@ function showScene(i){
   intro.i=i; const sc=SCENES[i], last=i===SCENES.length-1;
   intro.el.innerHTML='<div class="scene" data-i="'+i+'">'+sc.html(intro.hn)+'</div>'+
     '<div class="i-dots">'+SCENES.map((_,k)=>'<i'+(k===i?' class="on"':'')+'></i>').join('')+'</div>'+
-    '<div class="i-nav"><button class="btn ghost" id="iBack"'+(i===0?' disabled':'')+'>← Back</button><button class="btn ghost" id="iSkip">'+(intro.onDone?'Skip intro':'Close')+'</button><button class="btn '+(last?'hot':'sun')+' big" id="iNext">'+(last?(intro.onDone?'Start the game ▶':'Done'):'Next →')+'</button></div>'+
-    '<div class="i-skip">Space or → next · ← back · Esc skip</div>';
-  intro.el.querySelector('#iBack').onclick=()=>showScene(i-1);
-  intro.el.querySelector('#iNext').onclick=()=>showScene(i+1);
-  intro.el.querySelector('#iSkip').onclick=endIntro;
+    '<div class="i-skip">'+esc(intro.hn)+' moves this along from his phone</div>';
   if(sc.after)sc.after(intro.el);
+  if(VIEW==='tv'&&R()&&(R().introAt!==i||R().introStart!==!!intro.onDone))put('room:'+ROOM,'room',{...R(),introAt:i,introStart:!!intro.onDone});
 }
 function endIntro(){
   if(!intro)return;
   clearTimeout(intro.timer); intro.el.remove();
   const cb=intro.onDone; intro=null;
+  if(R()&&R().introAt!=null)put('room:'+ROOM,'room',{...R(),introAt:null,introStart:false});
   if(cb)cb();
 }
 
@@ -662,7 +659,7 @@ async function startGame(){
     if(!list.length)return;
     const secrets={}; list.forEach(q=>secrets[q.id]=q.secret);
     const k=await put('key:'+ROOM,'key',{secrets},ROOM+'S');
-    const r=await put('room:'+ROOM,'room',{...R(),phase:'playing',questions:list.map(({id,text,left,right})=>({id,text,left,right})),qi:0,rphase:'guess',lockAt:null});
+    const r=await put('room:'+ROOM,'room',{...R(),introAt:null,phase:'playing',questions:list.map(({id,text,left,right})=>({id,text,left,right})),qi:0,rphase:'guess',lockAt:null});
     if(!k||!r)toast('Could not start. Try again.',true);
   } finally{ startBusy=false; }
 }
@@ -679,19 +676,18 @@ function renderTV(){
     const last=r.qi+1>=r.questions.length;
     mount('tv-r-'+r.qi,'<main class="wrap compact">'+tvHead()+head+lz('<h1 class="tvq">'+esc(q.text)+'</h1>')+scaleBar(q,pinsFrom(rev),rev.actual)+
       '<section class="tvboard"><div class="reshead"><span>Scoreboard</span><span>guess · this round · total</span></div><div id="board"></div></section>'+
-      '<div class="opbar"><small>Press Space</small><button id="tvAct" class="btn hot big">'+(last?'Show final results':'Next question')+'</button></div></main>',
-      ()=>{animatePins(); if(best)setTimeout(()=>pop(false),1700); $('#tvAct').onclick=nextQuestion;});
+      '<div class="opbar"><small>'+esc(hn)+' moves to the '+(last?'final results':'next question')+' from his phone.</small></div></main>',
+      ()=>{animatePins(); if(best)setTimeout(()=>pop(false),1700);});
     setHtml($('#board'),tvResultsHtml(rev));
     return;
   }
   mount('tv-g-'+r.qi,'<main class="wrap guessing">'+tvHead()+head+lz('<h1 class="tvq">'+esc(q.text)+'</h1>')+scaleBar(q,[],null)+
-    '<div class="statusrow"><div class="cnt" id="lockcount"></div><small>Someone left the party? Tap × twice on their name.</small></div><div class="chips" id="chips"></div>'+
-    '<div class="opbar"><small>Reveals as soon as every phone has locked in</small><button id="tvAct" class="btn">Reveal now</button></div></main>'+
+    '<div class="statusrow"><div class="cnt" id="lockcount"></div></div><div class="chips" id="chips"></div></main>'+
     '<div class="lockover" id="lockover" hidden><div class="drum">🥁</div><span id="dtxt">Drum roll…</span><small>Everyone is locked in</small></div>',
-    ()=>{$('#tvAct').onclick=()=>doReveal(true); bindKick($('#chips'));});
+    ()=>{});
   const ps=players(), done=new Set(answered(ps,q.id).map(p=>p.pid));
   setText($('#lockcount'),done.size+' of '+ps.length+' locked in');
-  setHtml($('#chips'),chipsHtml(done,true));
+  setHtml($('#chips'),chipsHtml(done));
   syncLock(r);
 }
 function tvSetup(r,hn){
@@ -700,22 +696,18 @@ function tvSetup(r,hn){
     '<div class="stp"><i>2</i><span>Tap “Join a game” and enter this code</span></div><div class="tiles">'+ROOM.split('').map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>'+
     '<p class="lede">'+esc(hn)+': tap “I\'m the birthday person” and enter the room code and host PIN.</p></div>'+
     '<div class="card side"><div class="cnt" id="pcount"></div><div class="chips" id="chips"></div><span class="pill" id="hpill"></span>'+
-    '<button id="tvAct" class="btn hot big" disabled>Start game</button><small id="startNote"></small>'+
-    '<div class="btnrow"><button id="howBtn" class="btn">▶ Preview how to play</button><button id="startNow" class="btn ghost" disabled>Start without intro</button></div>'+
+    '<small id="startNote"></small>'+
     '<div class="btnrow"><button id="copyInv" class="btn">Copy invite link</button><button id="pinBtn" class="btn ghost">Show host PIN</button></div></div></section></main>',
     ()=>{
-      $('#tvAct').onclick=()=>playIntro(startGame); $('#startNow').onclick=startGame; $('#howBtn').onclick=()=>playIntro(null);
-      bindKick($('#chips'));
       $('#copyInv').onclick=async()=>{const link=base+'?r='+ROOM; try{await navigator.clipboard.writeText(link);toast('Invite link copied')}catch(e){toast(link)}};
       $('#pinBtn').onclick=()=>{const p=cache.get('pin:'+ROOM); const b=$('#pinBtn'); if(b.dataset.on){b.dataset.on='';b.textContent='Show host PIN'}else{b.dataset.on='1';b.textContent='Host PIN: '+(p?p.data.pin:'?')}};
     });
   const ps=players(), h=hostRow(), qn=(h&&h.questions)||[], set=qn.filter(q=>q.secret!=null).length, ready=!!(h&&h.ready)&&set>0;
   setText($('#pcount'),ps.length+(ps.length===1?' player':' players')+' in the room');
-  setHtml($('#chips'),chipsHtml(null,true));
+  setHtml($('#chips'),chipsHtml(null));
   const pill=$('#hpill'); pill.className='pill'+(ready?' ok':'');
   setText(pill,!h?'Waiting for '+hn+' to join':ready?hn+' is ready ✓ ('+set+' question'+(set===1?'':'s')+')':hn+' is setting numbers ('+set+' of '+qn.length+')');
-  const b=$('#tvAct'); b.disabled=!(ready&&ps.length>0); $('#startNow').disabled=b.disabled;
-  setText($('#startNote'),!ready?'Waiting for '+hn+' to say he\'s ready.':ps.length===0?'Waiting for at least one player to join.':'Everyone in? Start plays a short how-to-play first. Space skips it.');
+  setText($('#startNote'),!ready?'Waiting for '+hn+' to get ready on his phone.':ps.length===0?'Waiting for at least one player to join.':'Everyone in? '+hn+' starts the game from his phone.');
 }
 let _ac=null, _drumOn=false;
 function audio(){ try{ _ac=_ac||new (window.AudioContext||window.webkitAudioContext)(); if(_ac.state==='suspended')_ac.resume(); }catch(e){} return _ac }
@@ -740,9 +732,35 @@ function syncLock(r){
   if(r.rphase!=='locking')_drumOn=false;
 }
 async function nextQuestion(){
-  const r=R(), b=$('#tvAct'); if(b)b.disabled=true;
+  const r=R(); if(!r||r.phase!=='playing'||r.rphase!=='reveal')return;
   if(r.qi+1<r.questions.length) await put('room:'+ROOM,'room',{...r,qi:r.qi+1,rphase:'guess',lockAt:null});
   else await put('room:'+ROOM,'room',{...r,phase:'done'});
+}
+
+/* ---- commands from Aman's phone (private room, read only by the big screen) ---- */
+let cmdBusy=false;
+async function tvAct(type,d){
+  d=d||{}; const r=R(); if(!r)return;
+  if(type==='start'){
+    const h=hostRow(), set=((h&&h.questions)||[]).filter(q=>q.secret!=null).length;
+    if(r.phase!=='setup'||intro||!h||!h.ready||!set||!players().length)return;
+    if(d.intro)playIntro(startGame); else startGame();
+  } else if(type==='preview'){
+    if(r.phase==='setup'&&!intro)playIntro(null);
+  } else if(type==='intro'){
+    if(!intro)return;
+    if(d.act==='next')showScene(intro.i+1); else if(d.act==='back')showScene(intro.i-1); else if(d.act==='skip')endIntro();
+  } else if(type==='next'){
+    const q=(r.questions||[])[r.qi];
+    if(r.phase==='playing'&&r.rphase==='reveal'&&q&&revealFor(q.id)&&(d.qi==null||d.qi===r.qi))await nextQuestion();
+  }
+}
+async function tvCmd(){
+  const c=cache.get('cmd:'+ROOM), r=R(); if(!c||!r||cmdBusy)return;
+  const d=c.data||{}; if(!(d.seq>(r.cmdSeq||0)))return;
+  cmdBusy=true;
+  try{ await put('room:'+ROOM,'room',{...R(),cmdSeq:d.seq}); await tvAct(d.type,d); }
+  finally{ cmdBusy=false; }
 }
 
 /* ---- TV engine: runs only on the big screen ---- */
@@ -803,12 +821,21 @@ function qCard(q,i){
   '<input type="range" class="rng" min="0" max="100" value="'+(q.secret==null?50:q.secret)+'" data-rng aria-label="Your secret number">'+
   '<div class="qval"><b data-val>'+(q.secret==null?'–':q.secret)+'</b><small data-hint>'+(q.secret==null?'Drag to include this question':'Locked in')+'</small><button class="btn sm" data-fifty>Use 50</button></div></article>';
 }
+let hStartBusy=false;
+async function sendCmd(type,extra){
+  const prev=cache.get('cmd:'+ROOM), seq=Math.max(Date.now(),((prev&&prev.data&&prev.data.seq)||0)+1);
+  const ok=await put('cmd:'+ROOM,'cmd',{seq,type,...(extra||{})},ROOM+'S');
+  if(!ok)toast('Could not send. Check your connection.',true);
+  return ok;
+}
 function patchStart(){
   const set=hq.filter(q=>q.secret!=null).length, b=$('#rdy'); if(!b)return;
   b.disabled=!hReady&&set===0;
   b.textContent=hReady?'Ready ✓  Tap to undo':(set?'I\'m ready ('+set+' question'+(set===1?'':'s')+')':'Set at least one number');
   b.className='btn big '+(hReady?'sun':'hot');
-  setText($('#startnote'),hReady?'Waiting for the big screen to start. You can still change numbers.':'Questions without a number are skipped.');
+  setText($('#startnote'),hReady?'You can still change numbers until you press Start.':'Questions without a number are skipped.');
+  const ps=players(), go=$('#hgo'); if(go){ go.hidden=!hReady; const sb=$('#hStart'); sb.disabled=ps.length===0||hStartBusy; sb.textContent=ps.length?'Start game ('+ps.length+' player'+(ps.length===1?'':'s')+')':'Waiting for players to join'; }
+  setText($('#hcnt'),String(ps.length)); setHtml($('#hchips'),chipsHtml(null,true));
 }
 function patchSugg(){
   const el=$('#sugg'); if(!el)return;
@@ -824,16 +851,37 @@ function renderHost(){
   }
   if(!hInit)initHost();
   if(r.phase==='done'){ mount('h-done','<main class="wrap">'+pHead()+'<h1 class="h1">That\'s a wrap</h1><p class="lede">Check the big screen for the podium. You can close this page.</p></main>'); return; }
+  if(r.phase==='setup'&&r.introAt!=null){
+    const n=SCENES.length, i=r.introAt, last=i>=n-1, start=!!r.introStart;
+    mount('h-intro','<main class="wrap">'+pHead()+'<h1 class="h1">How to play</h1><p class="lede">It is playing on the big screen. Move it along when you are ready.</p><div class="card" style="text-align:center"><div class="qlabel">Scene <span id="hsc">1</span> of '+n+'</div></div>'+
+      '<div class="lockbar"><button id="hiNext" class="btn sun big"></button><div class="btnrow"><button id="hiBack" class="btn">← Back</button><button id="hiSkip" class="btn ghost"></button></div></div></main>',
+      ()=>{ const f=a=>()=>sendCmd('intro',{act:a}); $('#hiNext').onclick=f('next'); $('#hiBack').onclick=f('back'); $('#hiSkip').onclick=f('skip'); });
+    setText($('#hsc'),String(i+1)); setText($('#hiNext'),last?(start?'Start the game ▶':'Done'):'Next →'); $('#hiNext').className='btn big '+(last?'hot':'sun'); $('#hiBack').disabled=i===0; setText($('#hiSkip'),start?'Skip intro and start':'Close preview');
+    return;
+  }
   if(r.phase==='playing'){
-    const q=(r.questions||[])[r.qi];
-    mount('h-live:'+r.qi,'<main class="wrap">'+pHead()+'<h1 class="h1">Game on</h1><p class="lede">Put your phone away. The big screen runs everything now. Bluff well.</p>'+(q?'<div class="card"><div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div><p class="qt">'+esc(q.text)+'</p></div>':'')+'</main>');
+    const q=(r.questions||[])[r.qi]; if(!q)return;
+    const mine=hq.find(x=>x.id===q.id), last=r.qi+1>=r.questions.length;
+    mount('h-live:'+r.qi,'<main class="wrap">'+pHead()+'<div class="qlabel">Question '+(r.qi+1)+' of '+r.questions.length+'</div>'+lz('<h1 class="qt">'+esc(q.text)+'</h1>')+
+      '<div class="card" style="align-items:center;text-align:center"><div class="qlabel">Your secret number</div><div class="bignum">'+(mine&&mine.secret!=null?mine.secret:'?')+'</div><small class="muted">'+esc(q.left)+' ↔ '+esc(q.right)+'. Only you can see this.</small></div>'+
+      '<div class="statusrow"><div class="cnt" id="hcount"></div></div><div class="chips" id="hchips"></div><small class="muted">Tap × twice on a name to remove someone.</small>'+
+      '<div class="lockbar"><button id="hAct" class="btn big"></button></div></main>',
+      ()=>{ bindKick($('#hchips')); $('#hAct').onclick=()=>{ const b=$('#hAct'); if(b.disabled)return; const m=b.dataset.mode; b.disabled=true; setTimeout(()=>{b.dataset.hold=''},900); b.dataset.hold='1'; sendCmd('next',{qi:r.qi}); }; });
+    const ps=players(), done=answered(ps,q.id), rev=revealFor(q.id), b=$('#hAct'), ph=R().rphase;
+    setText($('#hcount'),ph==='reveal'?'Round revealed on the big screen':ph==='locking'?'All locked in. Drum roll…':done.length+' of '+ps.length+' locked in. The big screen reveals when everyone is in.');
+    setHtml($('#hchips'),chipsHtml(new Set(done.map(p=>p.pid)),true));
+    b.dataset.mode='next'; b.parentNode.hidden=ph!=='reveal';
+    setText(b,last?'Show final results':'Next question'); b.className='btn big hot';
+    b.disabled=b.dataset.hold==='1'||!rev;
     return;
   }
   mount('h-setup:'+hq.map(q=>q.id).join(','),
     '<main class="wrap">'+pHead()+'<h1 class="h1">Set your secret numbers</h1><p class="lede">Drag each slider to where you really sit. Nobody sees these until the reveal. A question you leave untouched is skipped.</p>'+
     '<div class="sugg" id="sugg"></div><div id="qlist" style="display:flex;flex-direction:column;gap:12px">'+hq.map(qCard).join('')+'</div>'+
     '<details class="card"><summary>Add your own question</summary><div class="stack"><label for="nq-text">Statement</label><input id="nq-text" maxlength="120" placeholder="'+esc(hn)+' sings in the shower."><label for="nq-scale">Scale</label><select id="nq-scale">'+Object.keys(SCALES).map(k=>'<option value="'+k+'">'+SCALE_NAMES[k]+'</option>').join('')+'<option value="custom">Custom…</option></select><div id="nq-custom" class="stack" hidden style="margin-top:0"><input id="nq-left" maxlength="24" placeholder="Left end"><input id="nq-right" maxlength="24" placeholder="Right end"></div><button id="nq-add" class="btn sun">Add question</button></div></details>'+
-    '<div class="startbar"><button id="rdy" class="btn hot big">Set at least one number</button><small id="startnote"></small></div></main>',
+    '<section><h2 class="qlabel" style="margin-bottom:8px">In the room (<span id="hcnt">0</span>)</h2><div class="chips" id="hchips"></div><small class="muted">Tap × twice on a name to remove someone.</small></section>'+
+    '<div class="startbar"><button id="rdy" class="btn hot big">Set at least one number</button>'+
+    '<div id="hgo" class="stack" hidden><label class="chk"><input type="checkbox" id="hIntro" checked> Play the how-to-play intro on the big screen first</label><button id="hStart" class="btn hot big">Start game</button><button id="hPreview" class="btn ghost">Preview how to play</button></div><small id="startnote"></small></div></main>',
     bindHostSetup,true);
   patchStart(); patchSugg();
 }
@@ -860,6 +908,14 @@ function bindHostSetup(){
     saveHostSoon(0); patchSugg();
   });
   $('#rdy').onclick=()=>{ hReady=!hReady; saveHostSoon(0); patchStart(); };
+  bindKick($('#hchips'));
+  $('#hStart').onclick=async()=>{
+    if(hStartBusy)return; hStartBusy=true; patchStart();
+    clearTimeout(hTimer); hReady=true; await saveHost();
+    await sendCmd('start',{intro:$('#hIntro').checked});
+    setTimeout(()=>{hStartBusy=false;patchStart()},5000);
+  };
+  $('#hPreview').onclick=()=>sendCmd('preview');
 }
 
 /* ---------- player phone ---------- */
@@ -892,9 +948,9 @@ function renderPlayer(){
       ()=>{ const go=async()=>{const name=($('#pname').value||'').trim(); if(!name)return toast('Type your name',true);
         const lp=store.get('bday_pid_'+ROOM), back=lp&&players().find(p=>p.pid===lp&&p.name.toLowerCase()===name.toLowerCase());
         if(back){ $('#pjoin').disabled=true; await joinAs(ROOM,back.name,back.pid); return; }
-        const dup=players().find(p=>p.name.toLowerCase()===name.toLowerCase()); if(dup&&!confirmDup){confirmDup=true;return toast('Someone named '+dup.name+' is in. Tap Join again if that is you, or add an initial.',true)}
-        $('#pjoin').disabled=true; await joinAs(ROOM,dup&&confirmDup?dup.name:name,dup&&confirmDup?dup.pid:null); const jb=$('#pjoin'); if(jb)jb.disabled=false;};
-        let confirmDup=false; $('#pjoin').onclick=go; $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
+        const dup=players().find(p=>p.name.toLowerCase()===name.toLowerCase());
+        $('#pjoin').disabled=true; if(dup)toast('Welcome back, '+dup.name); await joinAs(ROOM,dup?dup.name:name,dup?dup.pid:null,dup?dup.at:null); const jb=$('#pjoin'); if(jb)jb.disabled=false;};
+        $('#pjoin').onclick=go; $('#pname').addEventListener('keydown',e=>{if(e.key==='Enter')go()}); });
     return;
   }
   const me=players().find(p=>p.pid===pid)||{name:prow.data.name,score:0,pid};
@@ -961,18 +1017,20 @@ function render(){
   if(VIEW==='tv')renderTV(); else if(VIEW==='host')renderHost(); else renderPlayer();
 }
 function tick(){
-  if(VIEW==='tv')tvEngine();
+  if(VIEW==='tv'){tvCmd();tvEngine();}
   const r=R(); if(r&&r.phase==='playing'&&VIEW==='tv')syncLock(r);
 }
 document.addEventListener('keydown',e=>{
-  if(VIEW==='tv'&&intro){
+  if(VIEW!=='tv'||e.target.matches('input,textarea,select,button'))return;
+  const go=e.code==='Space'||e.key==='Enter', r=R();
+  if(intro){
     if(e.key==='Escape'){e.preventDefault();endIntro();}
-    else if(e.code==='Space'||e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();showScene(intro.i+1);}
+    else if(go||e.key==='ArrowRight'){e.preventDefault();showScene(intro.i+1);}
     else if(e.key==='ArrowLeft'){e.preventDefault();showScene(intro.i-1);}
     return;
   }
-  if(VIEW!=='tv'||e.target.matches('input,textarea,select,button'))return;
-  if(e.code==='Space'||e.key==='Enter'){const b=$('#tvAct'); if(b&&!b.disabled){e.preventDefault();b.click()}}
+  /* emergency fallback if the birthday person's phone dies */
+  if(go&&r){e.preventDefault(); tvAct(r.phase==='setup'?'start':'next',{intro:true});}
 });
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
 if(ROOM)enterRoom(VIEW); else render();
