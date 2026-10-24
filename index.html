@@ -2693,7 +2693,7 @@ const SCALES={
 const SCALE_NAMES={never:'Would Never Do ↔ Would Definitely Do',hates:'Hates It ↔ Loves It',idea:'Terrible Idea ↔ Great Idea',freq:'Never ↔ Always',me:'Not Me ↔ Literally Me'};
 /* shuffle so questions come in no fixed order and never two of the same kind in a row */
 const SHUFFLE=true;
-function qCat(id){ const m=/^d(\d+)$/.exec(id||''); if(!m)return 'x'+id; const n=+m[1]-1; return n<5?'food':n<10?'phd':n<15?'life':'fun'; }
+function qCat(id){ const m=/^d(\d+)$/.exec(id||''); if(!m)return 'x'+id; const n=+m[1]-1; return n<5?'food':n<10?'phd':n<15?'life':n<21?'fun':'party'; }
 function spread(list){
   if(!SHUFFLE)return list.slice();
   const left=list.slice(), out=[]; let last=null;
@@ -2730,8 +2730,14 @@ const DEFAULTS=[
   ['{n} goes on a group trip.',...SCALES.idea],
   ['{n} wakes up before 8 AM on weekends.',...SCALES.never],
   ['{n} buys something just because it was on sale.',...SCALES.me],
-  ['{n} will order the most expensive item on the menu.',...SCALES.never]
+  ['{n} will order the most expensive item on the menu.',...SCALES.never],
+  /* Added at the party */
+  ['How pissed does {n} get when he loses at badminton?','Totally chill','Fully pissed'],
+  ['How many books has {n} ordered and not finished?','0 books','20+ books'],
+  ['How many times a week does {n} wear a bonnet?','0 times','7 times'],
+  ['Who knows {n} better?','Ananya','Sukanya']
 ];
+const BASE_DEFAULTS=21;   /* defaults after this index get added to a room that was already set up */
 const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432','#5B8CFF','#F4F1E8','#2EC4B6','#FF6B6B'];
 const LOCK_MS=3800, CAP_MS=60000, PEND_MS=5000, VER=3;
 
@@ -3297,7 +3303,12 @@ let hq=[], hHandled={}, hReady=false, hInit=false, hSaving=false, hDirty=false, 
 const hostOk=()=>store.get('bday_ok_'+ROOM)==='1';
 function initHost(){
   const h=hostRow();
-  if(h&&Array.isArray(h.questions)){ hq=h.questions; hHandled=h.handled||{}; hReady=!!h.ready; }
+  if(h&&Array.isArray(h.questions)){ hq=h.questions; hHandled=h.handled||{}; hReady=!!h.ready;
+    const n=(R()&&R().hostName)||'Aman'; let added=false;
+    DEFAULTS.forEach((d,i)=>{ const id='d'+(i+1); if(i<BASE_DEFAULTS||hHandled['new:'+id]||hq.some(q=>q.id===id))return;
+      hq.push({id,text:d[0].replace(/\{n\}/g,n),left:d[1],right:d[2],secret:null}); hHandled['new:'+id]=1; added=true; });
+    if(added){ saveHostSoon(0); setTimeout(()=>toast('New questions added at the bottom. Set a number for each.'),400); }
+  }
   else{ const n=(R()&&R().hostName)||'Aman'; hq=spread(DEFAULTS.map((d,i)=>({id:'d'+(i+1),text:d[0].replace(/\{n\}/g,n),left:d[1],right:d[2],secret:null}))); saveHostSoon(0); }
   hInit=true;
 }
