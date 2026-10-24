@@ -244,6 +244,31 @@ body.tv .final .res-row{padding:clamp(4px,.75vh,10px) 12px;font-size:clamp(13px,
 .lockover{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;background:rgba(11,15,35,.82);z-index:40;backdrop-filter:blur(4px)}
 .drum{font-size:min(22vw,200px);line-height:1;animation:drum .12s linear infinite alternate;filter:drop-shadow(0 0 30px rgba(245,200,75,.5))}
 @keyframes drum{from{transform:rotate(-7deg) scale(1)}to{transform:rotate(7deg) scale(1.06)}}
+.lockover.fx{background:radial-gradient(ellipse at 50% 55%,rgba(28,40,120,.96),rgba(4,6,20,.97) 70%);overflow:hidden;gap:clamp(8px,2vh,24px)}
+.rv-rays{position:absolute;inset:-60%;background:repeating-conic-gradient(from 0deg,rgba(245,200,75,.13) 0 5deg,transparent 5deg 15deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%);animation:opSpin 9s linear infinite;opacity:.35;transition:opacity .4s}
+.lockover.hit .rv-rays{opacity:1;animation-duration:3s}
+.lockover.land .rv-rays{animation-duration:1.2s}
+.rv-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.lockover.hit .rv-flash{animation:opFlash .8s ease-out both}
+.lockover.land .rv-flash{animation:rvFlash2 .9s ease-out both}
+.rv-k{position:relative;font-family:var(--display);font-weight:700;letter-spacing:.3em!important;color:var(--gold)!important;font-size:clamp(16px,2.4vw,40px)!important;animation:rvPulse 1s ease-in-out infinite alternate}
+.rv-num{position:relative;font-family:var(--display);font-weight:900;font-size:clamp(110px,min(22vw,36vh),380px);line-height:1;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(86,116,255,.8);min-width:2.2ch;text-align:center}
+.lockover.hit .rv-num{animation:rvShake .09s linear infinite alternate}
+.lockover.land .rv-num{animation:rvLand .7s cubic-bezier(.2,1.6,.4,1) both;background:linear-gradient(180deg,#FFF1BE,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 40px rgba(245,200,75,.7))}
+.rv-bar{position:relative;width:min(80vw,1300px);height:clamp(12px,1.6vh,20px);border-radius:99px;background:linear-gradient(90deg,#3fb6f0,#7b6cf0 50%,#f0456e)}
+.rv-bar i{position:absolute;top:50%;left:var(--x,50%);width:clamp(28px,3vw,52px);aspect-ratio:1;border-radius:50%;background:#fff;border:5px solid var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 30px rgba(245,200,75,.9);transition:left .09s linear}
+.lockover.land .rv-bar i{transition:left .5s cubic-bezier(.2,1.4,.4,1);transform:translate(-50%,-50%) scale(1.35)}
+.rv-ring{position:absolute;left:50%;top:50%;width:30vmin;aspect-ratio:1;border-radius:50%;border:4px solid rgba(245,200,75,.8);transform:translate(-50%,-50%) scale(.2);opacity:0}
+.lockover.land .rv-ring{animation:rvRing 1.1s ease-out both}.lockover.land .rv-ring.b{animation-delay:.18s}
+@keyframes rvPulse{from{opacity:.55}to{opacity:1}}
+@keyframes rvShake{from{transform:translate(-3px,2px) rotate(-1.5deg)}to{transform:translate(3px,-2px) rotate(1.5deg)}}
+@keyframes rvLand{0%{transform:scale(1.7)}100%{transform:scale(1)}}
+@keyframes rvFlash2{0%{opacity:0}10%{opacity:.7}100%{opacity:0}}
+@keyframes rvRing{0%{opacity:1;transform:translate(-50%,-50%) scale(.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.2)}}
+body.tv .guessing .lz{animation:qIn .9s cubic-bezier(.2,1.35,.4,1) .1s both}
+body.tv .guessing .scale{animation:qUp .7s ease .5s both}
+@keyframes qIn{0%{opacity:0;transform:scale(.7);filter:brightness(2.2) blur(6px)}60%{opacity:1;filter:brightness(1.4)}100%{transform:none;filter:none}}
+@keyframes qUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 .lockover span{font-family:var(--display);font-weight:900;font-size:min(9vw,110px);line-height:1;color:var(--gold);margin-top:8px}
 .lockover small{color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:clamp(14px,2vw,24px)}
 .you-line{display:flex;justify-content:space-between;gap:12px;font-weight:700}
@@ -401,7 +426,7 @@ const DEFAULTS=[
   ['{n} will order the most expensive item on the menu.',...SCALES.never]
 ];
 const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432','#5B8CFF','#F4F1E8','#2EC4B6','#FF6B6B'];
-const LOCK_MS=4000, CAP_MS=60000, PEND_MS=5000, VER=3;
+const LOCK_MS=3800, CAP_MS=60000, PEND_MS=5000, VER=3;
 
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -802,8 +827,8 @@ function renderTV(){
   }
   mount('tv-g-'+r.qi,'<main class="wrap guessing">'+tvHead()+head+lz('<h1 class="tvq">'+esc(q.text)+'</h1>')+scaleBar(q,[],null)+
     '<div class="statusrow"><div class="cnt" id="lockcount"></div></div><div class="chips" id="chips"></div></main>'+
-    '<div class="lockover" id="lockover" hidden><div class="drum">🥁</div><span id="dtxt">Drum roll…</span><small>Here it comes</small></div>',
-    ()=>{});
+    '<div class="lockover fx" id="lockover" hidden><div class="rv-rays"></div><div class="rv-ring"></div><div class="rv-ring b"></div><small class="rv-k">Where did '+esc(r.hostName||'Aman')+' land?</small><div class="rv-num" id="rvnum">?</div><div class="rv-bar"><i id="rvknob"></i></div><div class="rv-flash"></div></div>',
+    ()=>{ sfxQuestion(r.qi); });
   const ps=players(), done=new Set(answered(ps,q.id).map(p=>p.pid));
   setText($('#lockcount'),ps.length&&done.size>=ps.length?'Everyone is locked in! Waiting for '+(r.hostName||'Aman')+' to reveal…':done.size+' of '+ps.length+' locked in');
   setHtml($('#chips'),chipsHtml(done));
@@ -815,10 +840,10 @@ function tvSetup(r,hn){
     '<div class="stp"><i>2</i><span>Tap “Join a game” and enter this code</span></div><div class="tiles">'+ROOM.split('').map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>'+
     '<p class="lede">'+esc(hn)+': tap “I\'m the birthday person” and enter the room code and host PIN.</p></div>'+
     '<div class="card side"><div class="cnt" id="pcount"></div><div class="chips" id="chips"></div><span class="pill" id="hpill"></span>'+
-    '<small id="startNote"></small><button id="sndOn" class="btn sun sndOn" hidden>🔊 Click once to turn on sound for the intro music</button>'+
+    '<small id="startNote"></small><button id="sndOn" class="btn sun sndOn" hidden>🔊 Click once to turn on sound (music and sound effects)</button>'+
     '<div class="btnrow"><button id="copyInv" class="btn">Copy invite link</button><button id="pinBtn" class="btn ghost">Show host PIN</button></div></div></section></main>',
     ()=>{
-      ytPrep(); $('#sndOn').onclick=soundOn;
+      ytPrep(); sfxEl('rev'); sfxEl('q'); $('#sndOn').onclick=soundOn;
       $('#copyInv').onclick=async()=>{const link=base+'?r='+ROOM; try{await navigator.clipboard.writeText(link);toast('Invite link copied')}catch(e){toast(link)}};
       $('#pinBtn').onclick=()=>{const p=cache.get('pin:'+ROOM); const b=$('#pinBtn'); if(b.dataset.on){b.dataset.on='';b.textContent='Show host PIN'}else{b.dataset.on='1';b.textContent='Host PIN: '+(p?p.data.pin:'?')}};
     });
@@ -846,11 +871,40 @@ function drumRoll(ms){
   const c=ac.createBufferSource(), cb=ac.createBuffer(1,ac.sampleRate*.9,ac.sampleRate), cd=cb.getChannelData(0); for(let i=0;i<cd.length;i++)cd[i]=(Math.random()*2-1)*Math.pow(1-i/cd.length,3);
   c.buffer=cb; const cg=ac.createGain(); cg.gain.value=.7; c.connect(cg); cg.connect(ac.destination); c.start(t0+dur+.05);
   }catch(e){} }
+/* sound effects on the big screen (files sit next to index.html) */
+const SFX={rev:{src:'ans_reveal.mp3',from:.5},q:{src:'show_question.mp3',from:1.25}};
+function sfxEl(k){ const x=SFX[k]; if(!x.el){ try{ x.el=new Audio(x.src); x.el.preload='auto'; x.el.load(); }catch(e){} } return x.el; }
+function sfx(k,fallback){
+  const a=VIEW==='tv'&&sfxEl(k); if(!a){ if(fallback)fallback(); return; }
+  try{ a.pause(); a.currentTime=SFX[k].from; a.volume=1; const p=a.play(); if(p&&p.catch)p.catch(()=>{ if(fallback)fallback(); }); }catch(e){ if(fallback)fallback(); }
+}
+let _qSound=-1;
+function sfxQuestion(qi){ if(VIEW!=='tv'||_qSound===qi)return; _qSound=qi; sfx('q'); }
+let _rv=null;
+function revealFx(r){
+  const el=$('#lockover'); if(!el)return;
+  const total=Math.max(1200,(r.lockAt||Date.now()+LOCK_MS)-Date.now()), q=(r.questions||[])[r.qi], k=keyRow(), actual=q&&k&&k.secrets?k.secrets[q.id]:null;
+  const num=$('#rvnum'), knob=$('#rvknob'), t0=Date.now(), land=Math.max(600,total-900), hit=Math.min(200,land/3);
+  el.classList.remove('hit','land'); setText(num,'?'); if(knob)knob.style.setProperty('--x','50%');
+  sfx('rev',()=>drumRoll(total));
+  const show=v=>{ setText(num,String(v)); if(knob)knob.style.setProperty('--x',v+'%'); };
+  let last=0;
+  const step=()=>{
+    if(!_rv||!document.body.contains(el))return;
+    const t=Date.now()-t0;
+    if(t>=hit&&!el.classList.contains('hit'))el.classList.add('hit');
+    if(t>=land){ if(actual!=null){ el.classList.add('land'); show(actual); } return; }
+    const p=Math.max(0,(t-hit)/(land-hit)), gap=40+Math.pow(p,2.2)*420;
+    if(t>=hit&&t-last>=gap){ last=t; show(Math.floor(Math.random()*101)); }
+    _rv.raf=requestAnimationFrame(step);
+  };
+  _rv={raf:requestAnimationFrame(step)};
+}
 function syncLock(r){
   const el=$('#lockover'); if(!el)return;
   el.hidden=r.rphase!=='locking';
-  if(r.rphase==='locking'&&!_drumOn){ _drumOn=true; drumRoll(Math.max(1200,(r.lockAt||Date.now()+LOCK_MS)-Date.now())); }
-  if(r.rphase!=='locking')_drumOn=false;
+  if(r.rphase==='locking'&&!_drumOn){ _drumOn=true; revealFx(r); }
+  if(r.rphase!=='locking'){ _drumOn=false; if(_rv){ cancelAnimationFrame(_rv.raf); _rv=null; } }
 }
 async function nextQuestion(){
   const r=R(); if(!r||r.phase!=='playing'||r.rphase!=='reveal')return;
