@@ -176,6 +176,7 @@ details.card summary{cursor:pointer;font-family:var(--display);font-weight:700;f
 .stack{display:flex;flex-direction:column;gap:10px;margin-top:12px}
 .toast{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);text-align:center;background:var(--mint);color:var(--ink);font-weight:700;padding:10px 16px;border-radius:99px;z-index:70}
 .toast.bad{background:var(--hot);color:#fff}
+.net.vtop{top:0;bottom:auto;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px}
 .net{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--hot);color:#fff;text-align:center;font-weight:700;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 
 /* --- results --- */
@@ -296,6 +297,7 @@ body.tv .final .res-row{padding:clamp(4px,.75vh,10px) 12px;font-size:clamp(13px,
 </head>
 <body>
 <div id="app" class="center">Loading…</div>
+<div id="ver" class="net vtop" hidden></div>
 <div id="net" class="net" hidden>Connection lost. Trying to reconnect…</div>
 
 <script>
@@ -341,7 +343,7 @@ const DEFAULTS=[
   ['{n} will order the most expensive item on the menu.',...SCALES.never]
 ];
 const PALETTE=['#46C8FF','#FFD23F','#3DDC97','#FF9F43','#B28DFF','#FF7BAC','#7EE8FA','#C6F432','#5B8CFF','#F4F1E8','#2EC4B6','#FF6B6B'];
-const LOCK_MS=4000, CAP_MS=60000, PEND_MS=5000;
+const LOCK_MS=4000, CAP_MS=60000, PEND_MS=5000, VER=3;
 
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -826,6 +828,7 @@ async function sendCmd(type,extra){
   const prev=cache.get('cmd:'+ROOM), seq=Math.max(Date.now(),((prev&&prev.data&&prev.data.seq)||0)+1);
   const ok=await put('cmd:'+ROOM,'cmd',{seq,type,...(extra||{})},ROOM+'S');
   if(!ok)toast('Could not send. Check your connection.',true);
+  else setTimeout(()=>{ const r=R(); if(VIEW==='host'&&ROOM&&r&&(r.cmdSeq||0)<seq)toast('The big screen didn\'t respond. Refresh the page on the TV, then try again.',true); },7000);
   return ok;
 }
 function patchStart(){
@@ -1016,7 +1019,20 @@ function render(){
   }
   if(VIEW==='tv')renderTV(); else if(VIEW==='host')renderHost(); else renderPlayer();
 }
+let verBad=0;
+function verCheck(){
+  const r=R(), el=$('#ver'); if(!el)return;
+  if(VIEW==='tv'){ if(r&&r.ver!==VER&&!cmdBusy)put('room:'+ROOM,'room',{...r,ver:VER}); return; }
+  let msg='';
+  if(r&&loaded){
+    if((r.ver||0)>VER)msg='A newer version is out. Refresh this page.';
+    else if(VIEW==='host'&&(r.ver||0)<VER)msg='The big screen is on an old version, so Start/Next won\'t reach it. Refresh the page on the TV.';
+  }
+  if(msg){ if(!verBad)verBad=Date.now(); } else verBad=0;
+  const show=!!msg&&Date.now()-verBad>4000; el.hidden=!show; if(show&&el.textContent!==msg)el.textContent=msg;
+}
 function tick(){
+  verCheck();
   if(VIEW==='tv'){tvCmd();tvEngine();}
   const r=R(); if(r&&r.phase==='playing'&&VIEW==='tv')syncLock(r);
 }
