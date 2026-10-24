@@ -110,6 +110,29 @@ a.btn{display:block;text-align:center;text-decoration:none}
 .tierline span{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
 .tierline b{color:var(--gold)}
 .tierline .bonus b{color:var(--mint)}
+.lockbar{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:6px;margin:0 -16px;padding:18px 16px max(12px,env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(11,15,35,0),rgba(11,15,35,.94) 32%)}
+.lockbar .warn{margin:0;text-align:center}
+@media (max-height:720px){
+  body:not(.tv) .lz-in{padding-top:10px;padding-bottom:10px}
+  body:not(.tv) .qt{font-size:clamp(16px,4.4vw,20px)}
+  body:not(.tv) .bignum{font-size:46px}
+  body:not(.tv) .card{padding:14px;gap:8px}
+  body:not(.tv) .wrap{gap:10px}
+  body:not(.tv) .ticks{display:none}
+  body:not(.tv) .ring{width:112px}
+  body:not(.tv) .bigpts{font-size:44px}
+  .phead{padding-bottom:0}
+}
+@media (min-width:561px){.lockbar{margin:0;padding-left:0;padding-right:0}}
+@media (max-height:480px){
+  body:not(.tv) .lede,body:not(.tv) .sc-mini,body:not(.tv) .lockbar .warn{display:none}
+  body:not(.tv) .qt{font-size:16px}
+  body:not(.tv) .lz-in{padding:8px 36px}
+  body:not(.tv) .bignum{font-size:30px}
+  body:not(.tv) .card{padding:10px 14px;gap:4px}
+  body:not(.tv) .lockbar{padding-top:10px}
+  body:not(.tv) .lockbar .btn{padding:10px}
+}
 .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;padding:0 2px;margin-top:-4px}
 .ring{--f:1;width:clamp(120px,38vw,170px);aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--f)*1turn),rgba(255,255,255,.1) 0);display:grid;place-items:center;box-shadow:0 0 40px rgba(245,200,75,.25)}
 .ring-in{width:80%;aspect-ratio:1;border-radius:50%;background:var(--bg);display:grid;place-content:center;text-align:center}
@@ -257,9 +280,12 @@ body.tv .final .res-row{padding:clamp(4px,.75vh,10px) 12px;font-size:clamp(13px,
 .i-tiers div{display:flex;justify-content:space-between;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:clamp(10px,1.2vw,20px);padding:clamp(8px,1vw,16px) clamp(16px,2vw,32px);font-size:clamp(16px,2.1vw,36px);font-weight:700;animation:popIn .45s var(--d,0s) both}
 .i-tiers b{font-family:var(--display);color:var(--mint)}
 .i-tiers .bonus{border-color:var(--sun);background:var(--panel2)} .i-tiers .bonus b{color:var(--sun)}
-.i-dots{position:fixed;left:50%;bottom:max(24px,2.4vw);transform:translateX(-50%);display:flex;gap:10px}
+.i-dots{position:fixed;left:50%;top:max(14px,1.6vw);transform:translateX(-50%);display:flex;gap:10px}
 .i-dots i{width:clamp(8px,.9vw,14px);height:clamp(8px,.9vw,14px);border-radius:50%;background:var(--line)} .i-dots i.on{background:var(--sun)}
-.i-skip{position:fixed;right:max(20px,2vw);bottom:max(18px,2vw);display:flex;align-items:center;gap:12px;color:var(--muted);font-size:clamp(12px,1.2vw,18px)}
+.i-nav{position:fixed;left:0;right:0;bottom:max(46px,3.6vw);display:flex;justify-content:center;align-items:center;gap:clamp(10px,1.4vw,24px);z-index:3}
+.i-nav .btn{font-size:clamp(14px,1.5vw,24px);padding:clamp(10px,1.1vw,18px) clamp(18px,2.2vw,40px)}
+.i-nav .btn:disabled{opacity:.35}
+.i-skip{position:fixed;left:0;right:0;justify-content:center;bottom:max(10px,.8vw);display:flex;align-items:center;gap:12px;color:var(--muted);font-size:clamp(12px,1.2vw,18px)}
 @media (prefers-reduced-motion:reduce){.scene,.b,.i-tiers div,.i-q,.i-knob,.i-ph-btn{animation:none}}
 
 </style>
@@ -512,7 +538,7 @@ const tvHead=()=>'<header class="tvhead"><div class="brand"><span>Kaun Banega <e
 /* ---------- landing ---------- */
 function landingHtml(){
   return '<main class="wrap landing"><div class="brand">The birthday game show</div>'+
-  '<h1 class="logo"><span class="k">Kaun Banega</span><span class="am"><b>AMAN</b>aire</span></h1><p class="lede">How well do you know Aman? He secretly places himself on a scale. Everyone else argues, bluffs, and guesses.</p>'+
+  '<h1 class="logo"><span class="k">Kaun Banega</span><span class="am"><b>AMAN</b>aire</span></h1>'+
   '<section class="card"><h2>Join a game</h2><label for="jCode">Room code (shown on the big screen)</label>'+
   '<input id="jCode" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" value="'+esc(PREFILL)+'">'+
   '<label for="jName">Your name</label><input id="jName" maxlength="14" autocomplete="off" value="'+esc(sstore.get('bday_name')||'')+'">'+
@@ -610,12 +636,15 @@ function showScene(i){
   clearTimeout(intro.timer);
   if(i>=SCENES.length){ endIntro(); return; }
   if(i<0)i=0;
-  intro.i=i; const sc=SCENES[i];
+  intro.i=i; const sc=SCENES[i], last=i===SCENES.length-1;
   intro.el.innerHTML='<div class="scene" data-i="'+i+'">'+sc.html(intro.hn)+'</div>'+
     '<div class="i-dots">'+SCENES.map((_,k)=>'<i'+(k===i?' class="on"':'')+'></i>').join('')+'</div>'+
-    '<div class="i-skip">Space to skip · ← → to step</div>';
+    '<div class="i-nav"><button class="btn ghost" id="iBack"'+(i===0?' disabled':'')+'>← Back</button><button class="btn ghost" id="iSkip">'+(intro.onDone?'Skip intro':'Close')+'</button><button class="btn '+(last?'hot':'sun')+' big" id="iNext">'+(last?(intro.onDone?'Start the game ▶':'Done'):'Next →')+'</button></div>'+
+    '<div class="i-skip">Space or → next · ← back · Esc skip</div>';
+  intro.el.querySelector('#iBack').onclick=()=>showScene(i-1);
+  intro.el.querySelector('#iNext').onclick=()=>showScene(i+1);
+  intro.el.querySelector('#iSkip').onclick=endIntro;
   if(sc.after)sc.after(intro.el);
-  intro.timer=setTimeout(()=>showScene(i+1),sc.ms);
 }
 function endIntro(){
   if(!intro)return;
@@ -905,7 +934,7 @@ function renderPlayer(){
     return;
   }
   if(pend){
-    mount('p-pend:'+r.qi,'<main class="wrap">'+head+'<div class="card" style="align-items:center;text-align:center"><div class="qlabel">Locking in…</div><div class="ring" id="ring" style="--f:1"><div class="ring-in"><b id="pnum">5</b><small>sec</small></div></div><div class="pnum">'+pend.value+'</div><p class="lede">Your guess locks for good when the timer ends.</p></div><button id="chg" class="btn big">Change my answer</button></main>',
+    mount('p-pend:'+r.qi,'<main class="wrap">'+head+'<div class="card" style="align-items:center;text-align:center"><div class="qlabel">Locking in…</div><div class="ring" id="ring" style="--f:1"><div class="ring-in"><b id="pnum">5</b><small>sec</small></div></div><div class="pnum">'+pend.value+'</div><p class="lede">Your guess locks for good when the timer ends.</p></div><div class="lockbar"><button id="chg" class="btn big">Change my answer</button></div></main>',
       ()=>{ $('#chg').onclick=()=>{cancelPend();curSig='';render()}; });
     return;
   }
@@ -916,7 +945,7 @@ function renderPlayer(){
   const dv=draft[q.id]!=null?draft[q.id]:50;
   mount('p-g:'+r.qi,'<main class="wrap">'+head+'<p class="lede">Where did '+esc(hn)+' place himself? Ask him anything, then drag.</p>'+
     '<div class="card"><div class="mini-ends"><span>'+esc(q.left)+'</span><span>'+esc(q.right)+'</span></div><input id="gr" type="range" class="rng" min="0" max="100" value="'+dv+'" aria-label="Your guess"><div class="ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div><div class="bignum" id="gv">'+dv+'</div></div>'+
-    '<button id="lock" class="btn sun big">Lock it in</button><p class="warn">After you tap, you get 5 seconds to change your mind.</p>'+
+    '<div class="lockbar"><button id="lock" class="btn sun big">Lock it in</button><p class="warn">After you tap, you get 5 seconds to change your mind.</p></div>'+
     '<div class="sc-mini"><div class="qlabel">Points by distance from '+esc(hn)+'\'s number</div>'+scoringHtml(hn,true)+'</div></main>',
     ()=>{ const gr=$('#gr'); gr.addEventListener('input',()=>{setText($('#gv'),gr.value);draft[q.id]=parseInt(gr.value,10)});
       $('#lock').onclick=()=>startPend(q,parseInt(gr.value,10)); });
@@ -937,8 +966,8 @@ function tick(){
 }
 document.addEventListener('keydown',e=>{
   if(VIEW==='tv'&&intro){
-    if(e.code==='Space'||e.key==='Enter'||e.key==='Escape'){e.preventDefault();endIntro();}
-    else if(e.key==='ArrowRight'){e.preventDefault();showScene(intro.i+1);}
+    if(e.key==='Escape'){e.preventDefault();endIntro();}
+    else if(e.code==='Space'||e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();showScene(intro.i+1);}
     else if(e.key==='ArrowLeft'){e.preventDefault();showScene(intro.i-1);}
     return;
   }
